@@ -68,12 +68,6 @@ export function createShellTool(projectRoot: string): Tool {
           }
         });
         
-        const output = [];
-        if (stdout) output.push(`Stdout:\n${stdout}`);
-        if (stderr) output.push(`Stderr:\n${stderr}`);
-        output.push(`Exit Code: ${exitCode}`);
-        
-        return { result: output.join('\n\n'), isError: exitCode !== 0 };
       } catch (err: any) {
         return { result: `Error: ${err.message}`, isError: true };
       }
