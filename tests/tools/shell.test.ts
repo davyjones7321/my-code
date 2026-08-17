@@ -21,7 +21,7 @@ describe('Shell Tool', () => {
 
   it('timeout kills long-running process', async () => {
     const tool = createShellTool(process.cwd());
-    const command = '"C:\\Users\\DavyJ\\.bun\\bin\\bun.exe" -e "setTimeout(()=>{}, 10000)"';
+    const command = 'powershell.exe -Command "Start-Sleep -Seconds 10"';
     const res = await tool.execute({ command, timeout: 500 });
     expect(res.isError).toBe(true);
     expect(res.result).toContain('timed out');

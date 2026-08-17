@@ -31,4 +31,8 @@ The core agent loop (`src/agent/loop.ts`) uses an `AsyncGenerator<LoopEvent>` to
 The `Provider` interface (`src/providers/base.ts`) abstracts out the specific LLM API. Adapters (e.g., `AnthropicProvider`) convert standardized `Message[]` inputs to provider-specific formats and normalize their responses into `ContentBlock[]`.
 
 ### Message Types
-Provider-agnostic types (`src/agent/types.ts`) define `Message`, `ContentBlock` (`TextContent`, `ToolUseContent`, `ToolResultContent`), and `ToolDefinition`. All providers must conform to this schema, ensuring the agent loop logic is agnostic to the LLM backend.
+Provider-agnostic types (`src/agent/types.ts`) define `Message`, `ContentBlock` (`TextContent`, `ToolUseContent`, `ToolResultContent`), and `ToolDefinition`. All providers must conform to this schema, ensuring the agent loop logic is agnostic to the LLM backend.  
+### Phase 3 - Tool Registry  
+- Tool Registry implemented for managing tools.  
+- Built-in tools added: File read/write/edit, glob, grep, shell.  
+- Basic MCP client added for stdio JSON-RPC tool discovery. 

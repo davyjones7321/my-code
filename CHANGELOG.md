@@ -22,4 +22,4 @@
     - Created base Provider interface in `src/providers/base.ts`
     - Implemented Anthropic API adapter in `src/providers/anthropic.ts`
     - Created the core agent loop using AsyncGenerator in `src/agent/loop.ts`
-    - Updated CLI run command to initialize agent loop and mock tool
+    - Updated CLI run command to initialize agent loop and mock tool- Phase 3: Tool Registry and Built-in Tools (File Ops, Glob, Grep, Shell, MCP Client) 
