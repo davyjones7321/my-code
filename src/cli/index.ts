@@ -39,97 +39,135 @@ program
 		console.log(chalk.green(`Initialized config at ${configPath}`));
 	});
 
-import { AnthropicProvider } from '../providers/anthropic.ts';
+import { ProviderRegistry } from '../providers/registry.ts';
+import { ToolRegistry } from '../tools/registry.ts';
+import { registerBuiltinTools } from '../tools/defaults.ts';
+import { MemoryAPI } from '../memory/api.ts';
+import { createRememberTool, createRecallTool } from '../memory/tools.ts';
+import { ControlLayer } from '../control/index.ts';
 import { runAgentLoop, type ToolExecutor } from '../agent/loop.ts';
-import type { ToolDefinition } from '../agent/types.ts';
 
 program
 	.command('run')
 	.description('Run the agent loop')
 	.argument('<prompt>', 'The prompt for the agent')
-	.action(async (prompt) => {
+	.option('-p, --provider <name>', 'Provider to use (overrides defaultProvider in config)')
+	.option('-m, --model <name>', 'Model to use (overrides model in config)')
+	.option('--plan', 'Run in read-only plan mode')
+	.action(async (prompt, options) => {
 		try {
 			const configPath = getConfigPath();
 			const config = loadConfig(configPath);
-			const defaultProviderName = config.defaultProvider || 'anthropic';
-			const providerConfig = config.providers?.[defaultProviderName];
+			const providerName = options.provider || config.defaultProvider || 'default';
 			
-			if (!providerConfig || !providerConfig.apiKey) {
-				console.error(chalk.red(`Error: Missing API key for provider ${defaultProviderName}. Please check your config at ${configPath}`));
+			const registry = ProviderRegistry.fromConfig(config);
+			const provider = registry.get(providerName);
+			
+			if (!provider) {
+				const available = registry.list();
+				console.error(chalk.red(`\nError: Provider "${providerName}" is not configured.`));
+				if (available.length > 0) {
+					console.log(chalk.yellow(`Available configured providers: ${available.join(', ')}`));
+				} else {
+					console.log(chalk.yellow(`\nPlease configure a provider in ${configPath}:`));
+					console.log(chalk.gray(`
+[providers.anthropic]
+apiKey = "sk-ant-..."
+model = "claude-3-7-sonnet-20250219"
+
+[providers.openai]
+apiKey = "sk-proj-..."
+model = "gpt-4o"
+
+[providers.ollama]
+baseUrl = "http://localhost:11434/v1"
+model = "deepseek-coder-v2"
+apiKey = "ollama"
+`));
+				}
 				process.exit(1);
 			}
 
-			let provider;
-			if (defaultProviderName === 'anthropic') {
-				provider = new AnthropicProvider(providerConfig.apiKey, providerConfig.baseUrl);
-			} else {
-				console.error(chalk.red(`Error: Provider ${defaultProviderName} not supported yet.`));
-				process.exit(1);
+			const providerConfig = config.providers?.[providerName];
+			const model = options.model || providerConfig?.model || 'default';
+			const projectRoot = config.projectRoot || process.cwd();
+
+			// 1. Initialize tool registry with all builtin tools
+			const toolRegistry = new ToolRegistry();
+			registerBuiltinTools(toolRegistry, projectRoot);
+
+			// 2. Add memory tools
+			const memoryApi = new MemoryAPI();
+			toolRegistry.register(createRememberTool(memoryApi));
+			toolRegistry.register(createRecallTool(memoryApi));
+
+			// 3. Setup control layer
+			const controlLayer = new ControlLayer({
+				approvalMode: config.approvalMode || 'auto',
+				projectRoot
+			});
+
+			if (options.plan) {
+				controlLayer.getModeController().setMode('plan');
 			}
 
-			const echoToolDef: ToolDefinition = {
-				name: 'echo',
-				description: 'Echoes the input back',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						message: { type: 'string' }
-					},
-					required: ['message']
+			// Wrap tool executors with control layer validation
+			const toolExecutors: ToolExecutor[] = toolRegistry.getExecutors().map(executor => ({
+				name: executor.name,
+				async execute(input: Record<string, unknown>) {
+					const check = await controlLayer.checkToolCall(executor.name, input);
+					if (!check.permitted) {
+						return {
+							result: `[Control Denied]: ${check.reason || 'Operation not permitted'}`,
+							isError: true
+						};
+					}
+					return executor.execute(check.sanitizedInput || input);
 				}
-			};
+			}));
 
-			const echoToolExecutor: ToolExecutor = {
-				name: 'echo',
-				async execute(input) {
-					return { result: String(input.message), isError: false };
-				}
-			};
+			const toolDefinitions = toolRegistry.getDefinitions();
 
 			const loopConfig = {
-				maxIterations: config.maxIterations || 10,
-				systemPrompt: 'You are a helpful AI assistant.',
-				tools: [echoToolDef]
+				maxIterations: config.maxIterations || 50,
+				systemPrompt: `You are an expert autonomous AI coding assistant.
+You have access to tools for inspecting, editing, searching files, running shell commands, and managing memory.
+Always verify your edits and prioritize safety.`,
+				tools: toolDefinitions
 			};
 
-			console.log(chalk.blue(`Starting agent loop with prompt: "${prompt}"...`));
+			console.log(chalk.blue(`\n🚀 Harness active: [Provider: ${providerName} | Model: ${model} | Mode: ${controlLayer.getModeController().getMode()}]`));
+			console.log(chalk.gray(`Prompt: "${prompt}"\n`));
 
-			// Wait, the runAgentLoop callConfig in loop.ts takes model. It takes it from ProviderCallConfig.
-			// Actually I didn't pass callConfig into runAgentLoop correctly since runAgentLoop doesn't accept callConfig.
-			// Let's modify the runAgentLoop logic in my head or just patch it.
-			// I need to patch loop.ts to accept ProviderCallConfig if it's missing the model. Wait, loop.ts creates ProviderCallConfig itself!
-			// I should edit runAgentLoop to accept the model as part of AgentLoopConfig or pass ProviderCallConfig to it.
-			// The instructions didn't specify where model comes from, but CLI loads it from ProviderConfig.
+			const loopGenerator = runAgentLoop(provider, prompt, toolExecutors, loopConfig, { model });
 
-			// Actually, let's fix loop.ts first. Wait, loop.ts has a ProviderCallConfig that has model: ''.
-			// I'll update loop.ts too.
-			
-			const model = providerConfig.model || 'claude-3-haiku-20240307';
-			const loopGenerator = runAgentLoop(provider, prompt, [echoToolExecutor], loopConfig, { model });
-			
 			for await (const event of loopGenerator) {
 				switch (event.type) {
 					case 'thinking':
-						console.log(chalk.gray(`[Thinking] ${event.message}`));
+						console.log(chalk.gray(`🧠 [Thinking] ${event.message}`));
 						break;
 					case 'tool_call':
-						console.log(chalk.yellow(`[Tool Call] ${event.toolName}: ${JSON.stringify(event.toolInput)}`));
+						console.log(chalk.yellow(`🛠️  [Tool Call] ${event.toolName}: ${JSON.stringify(event.toolInput)}`));
 						break;
 					case 'tool_result':
 						if (event.isError) {
-							console.log(chalk.red(`[Tool Result Error] ${event.result}`));
+							console.log(chalk.red(`❌ [Tool Error] ${event.result}`));
 						} else {
-							console.log(chalk.green(`[Tool Result] ${event.result}`));
+							// Truncate long results for clean CLI display
+							const preview = event.result.length > 300 
+								? event.result.slice(0, 300) + '... (truncated)' 
+								: event.result;
+							console.log(chalk.green(`✔️  [Tool Result] ${preview}`));
 						}
 						break;
 					case 'response':
-						console.log(chalk.cyan(`[Response]\n${event.text}`));
+						console.log(chalk.cyan(`\n💬 [Response]\n${event.text}\n`));
 						break;
 					case 'error':
-						console.error(chalk.red(`[Error] ${event.error.message}`));
+						console.error(chalk.red(`\n💥 [Error] ${event.error.message}`));
 						break;
 					case 'done':
-						console.log(chalk.magenta(`[Done] Iterations: ${event.totalIterations}`));
+						console.log(chalk.magenta(`🏁 [Done] Completed in ${event.totalIterations} iteration(s).\n`));
 						break;
 				}
 			}
@@ -140,3 +178,4 @@ program
 	});
 
 program.parse();
+
