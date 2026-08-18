@@ -1,7 +1,7 @@
-import * as os from 'node:os';
-import * as path from 'node:path';
-import * as fs from 'node:fs';
-import { parse, stringify } from 'smol-toml';
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { parse, stringify } from "smol-toml";
 
 export interface ProviderConfig {
 	apiKey: string;
@@ -12,30 +12,30 @@ export interface ProviderConfig {
 export interface HarnessConfig {
 	providers?: Record<string, ProviderConfig>;
 	defaultProvider: string;
-	approvalMode: 'auto' | 'manual' | 'yolo';
+	approvalMode: "auto" | "manual" | "yolo";
 	maxIterations: number;
 	projectRoot: string;
 }
 
 const DEFAULT_CONFIG: HarnessConfig = {
-	defaultProvider: 'default',
-	approvalMode: 'manual',
+	defaultProvider: "default",
+	approvalMode: "manual",
 	maxIterations: 50,
-	projectRoot: process.cwd()
+	projectRoot: process.cwd(),
 };
 
 /**
  * Gets the global config directory path
  */
 export function getConfigDir(): string {
-	return path.join(os.homedir(), '.harness');
+	return path.join(os.homedir(), ".harness");
 }
 
 /**
  * Gets the global config file path
  */
 export function getConfigPath(): string {
-	return path.join(getConfigDir(), 'config.toml');
+	return path.join(getConfigDir(), "config.toml");
 }
 
 /**
@@ -44,7 +44,7 @@ export function getConfigPath(): string {
  */
 export function loadConfig(configPath: string = getConfigPath()): HarnessConfig {
 	try {
-		const content = fs.readFileSync(configPath, 'utf8');
+		const content = fs.readFileSync(configPath, "utf8");
 		const parsed = parse(content) as unknown as Partial<HarnessConfig>;
 		return mergeConfigs(DEFAULT_CONFIG, parsed as HarnessConfig);
 	} catch (error) {
@@ -62,14 +62,14 @@ export function saveConfig(config: HarnessConfig, configPath: string = getConfig
 		fs.mkdirSync(dir, { recursive: true });
 	}
 	const content = stringify(config as any);
-	fs.writeFileSync(configPath, content, 'utf8');
+	fs.writeFileSync(configPath, content, "utf8");
 }
 
 /**
  * Gets project-specific config if it exists.
  */
 export function getProjectConfig(projectRoot: string): HarnessConfig | null {
-	const projectConfigPath = path.join(projectRoot, '.harness', 'config.toml');
+	const projectConfigPath = path.join(projectRoot, ".harness", "config.toml");
 	if (fs.existsSync(projectConfigPath)) {
 		return loadConfig(projectConfigPath);
 	}
@@ -81,21 +81,21 @@ export function getProjectConfig(projectRoot: string): HarnessConfig | null {
  */
 export function mergeConfigs(...configs: Partial<HarnessConfig>[]): HarnessConfig {
 	const result: any = { ...DEFAULT_CONFIG };
-	
+
 	for (const config of configs) {
 		if (!config) continue;
-		
+
 		for (const key of Object.keys(config) as (keyof HarnessConfig)[]) {
-			if (key === 'providers') {
+			if (key === "providers") {
 				result.providers = {
 					...result.providers,
-					...config.providers
+					...config.providers,
 				};
 			} else if (config[key] !== undefined) {
 				result[key] = config[key];
 			}
 		}
 	}
-	
+
 	return result as HarnessConfig;
 }
