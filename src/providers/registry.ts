@@ -33,11 +33,15 @@ export class ProviderRegistry {
     for (const [name, providerConfig] of Object.entries(config.providers)) {
       let provider: Provider;
       
-      const isAnthropic = name.includes('anthropic') || (providerConfig.model && providerConfig.model.startsWith('claude'));
-      const isOllama = name.includes('ollama') || (providerConfig.baseUrl && providerConfig.baseUrl.includes('localhost:11434'));
+      const isOpenRouter = name.toLowerCase().includes('openrouter') || (providerConfig.baseUrl && providerConfig.baseUrl.includes('openrouter.ai'));
+      const isOllama = name.toLowerCase().includes('ollama') || (providerConfig.baseUrl && providerConfig.baseUrl.includes('localhost:11434'));
+      const isAnthropic = !isOpenRouter && (name.toLowerCase().includes('anthropic') || (providerConfig.model && providerConfig.model.startsWith('claude')));
 
-      if (isAnthropic) {
-        provider = new AnthropicProvider(providerConfig.apiKey);
+      if (isOpenRouter) {
+        provider = new OpenAIProvider(providerConfig.apiKey, providerConfig.baseUrl || 'https://openrouter.ai/api/v1');
+        provider.name = name;
+      } else if (isAnthropic) {
+        provider = new AnthropicProvider(providerConfig.apiKey, providerConfig.baseUrl);
         provider.name = name;
       } else if (isOllama) {
         provider = new OllamaProvider(providerConfig.baseUrl, providerConfig.apiKey);

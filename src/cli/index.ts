@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadConfig, saveConfig, getConfigPath } from '../config/index.ts';
+import { loadConfig, saveConfig, getConfigPath, getProjectConfig, mergeConfigs } from '../config/index.ts';
 
 const program = new Command();
 
@@ -56,8 +56,10 @@ program
 	.option('--plan', 'Run in read-only plan mode')
 	.action(async (prompt, options) => {
 		try {
-			const configPath = getConfigPath();
-			const config = loadConfig(configPath);
+			const globalConfigPath = getConfigPath();
+			const globalConfig = loadConfig(globalConfigPath);
+			const projectConfig = getProjectConfig(process.cwd());
+			const config = mergeConfigs(globalConfig, projectConfig || {});
 			const providerName = options.provider || config.defaultProvider || 'default';
 			
 			const registry = ProviderRegistry.fromConfig(config);
