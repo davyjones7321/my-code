@@ -31,7 +31,7 @@ const DANGEROUS_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
 ];
 
 /** Safe tool names that never need approval */
-const SAFE_TOOLS = ['read_file', 'glob_files', 'grep_search'];
+const SAFE_TOOLS = ['read_file', 'glob_files', 'grep_search', 'remember_fact', 'recall_facts'];
 
 /** Tools that always need approval in auto mode */
 const ALWAYS_ASK_TOOLS = ['run_command'];

@@ -3,8 +3,8 @@ import { Tool } from './sandbox.js';
 export type AgentMode = 'plan' | 'build';
 
 /** Tools allowed in each mode */
-const PLAN_MODE_TOOLS = ['read_file', 'glob_files', 'grep_search'];
-const BUILD_MODE_TOOLS = ['read_file', 'glob_files', 'grep_search', 'write_file', 'edit_file', 'run_command'];
+const PLAN_MODE_TOOLS = ['read_file', 'glob_files', 'grep_search', 'recall_facts'];
+const BUILD_MODE_TOOLS = ['read_file', 'glob_files', 'grep_search', 'write_file', 'edit_file', 'run_command', 'remember_fact', 'recall_facts'];
 
 export class ModeController {
   private mode: AgentMode = 'build';
