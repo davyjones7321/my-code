@@ -3,7 +3,18 @@ import type { Tool } from "./sandbox.js";
 export type AgentMode = "plan" | "build";
 
 /** Tools allowed in each mode */
-const PLAN_MODE_TOOLS = ["read_file", "glob_files", "grep_search", "recall_facts"];
+const PLAN_MODE_TOOLS = [
+	"read_file",
+	"glob_files",
+	"grep_search",
+	"recall_facts",
+	// Subagent read-only tools (plan mode)
+	"manage_subagents",
+	// LSP read-only tools (plan mode)
+	"get_diagnostics",
+	"get_definition",
+	"find_references",
+];
 const BUILD_MODE_TOOLS = [
 	"read_file",
 	"glob_files",
@@ -13,6 +24,15 @@ const BUILD_MODE_TOOLS = [
 	"run_command",
 	"remember_fact",
 	"recall_facts",
+	// Subagent tools (build mode)
+	"invoke_subagent",
+	"send_message",
+	"manage_subagents",
+	"define_subagent",
+	// LSP tools (build mode)
+	"get_diagnostics",
+	"get_definition",
+	"find_references",
 ];
 
 export class ModeController {

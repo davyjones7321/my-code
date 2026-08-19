@@ -31,7 +31,22 @@ const DANGEROUS_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
 ];
 
 /** Safe tool names that never need approval */
-const SAFE_TOOLS = ["read_file", "glob_files", "grep_search", "remember_fact", "recall_facts"];
+const SAFE_TOOLS = [
+	"read_file",
+	"glob_files",
+	"grep_search",
+	"remember_fact",
+	"recall_facts",
+	// Subagent tools (read-only management and type definitions are safe)
+	"manage_subagents",
+	"define_subagent",
+	"invoke_subagent",
+	"send_message",
+	// LSP tools (all read-only, safe)
+	"get_diagnostics",
+	"get_definition",
+	"find_references",
+];
 
 /** Tools that always need approval in auto mode */
 const ALWAYS_ASK_TOOLS = ["run_command"];
