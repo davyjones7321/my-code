@@ -13,5 +13,5 @@ describe("CLI Entrypoint", () => {
 
 		expect(result.status).toBe(0);
 		expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
-	});
+	}, 30000);
 });

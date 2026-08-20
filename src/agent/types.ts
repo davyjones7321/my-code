@@ -40,7 +40,7 @@ export interface ToolDefinition {
 export type LoopEvent =
 	| { type: "thinking"; message: string }
 	| { type: "tool_call"; toolName: string; toolInput: Record<string, unknown>; toolUseId: string }
-	| { type: "tool_result"; toolUseId: string; result: string; isError: boolean }
+	| { type: "tool_result"; toolUseId: string; toolName?: string; result: string; isError: boolean }
 	| { type: "response"; text: string }
 	| { type: "error"; error: Error }
 	| { type: "done"; totalIterations: number };
