@@ -12,6 +12,7 @@ import {
 	modeCommand,
 	modelCommand,
 	resetCommand,
+	scheduleCommand,
 	skillsCommand,
 	usageCommand,
 } from "../../src/tui/commands.ts";
@@ -50,8 +51,8 @@ describe("TUI Slash Commands & Shell Passthrough", () => {
 			const registry = createDefaultRegistry();
 			const list = registry.list();
 
-			expect(list.length).toBe(9);
-			expect(BUILTIN_COMMANDS.length).toBe(9);
+			expect(list.length).toBe(10);
+			expect(BUILTIN_COMMANDS.length).toBe(10);
 		});
 
 		it("should retrieve commands by canonical name and aliases", () => {
@@ -96,7 +97,13 @@ describe("TUI Slash Commands & Shell Passthrough", () => {
 
 			// Mode
 			expect(registry.get("mode")?.name).toBe("mode");
+
+			// Schedule & aliases
+			expect(registry.get("schedule")?.name).toBe("schedule");
+			expect(registry.get("sched")?.name).toBe("schedule");
+			expect(registry.get("cron")?.name).toBe("schedule");
 		});
+
 
 		it("should correctly identify slash commands, shell passthrough, and regular prompts", () => {
 			const registry = new SlashCommandRegistry();

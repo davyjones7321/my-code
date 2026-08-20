@@ -770,6 +770,16 @@ Always verify your edits and prioritize safety.`;
 						}
 					}
 
+					if (signal.aborted) {
+						const error = new Error("Turn aborted by user.");
+						const errorEvent: ErrorEvent = {
+							type: "error",
+							error,
+						};
+						yield emitAndYield(errorEvent);
+						throw error;
+					}
+
 					// 4. Execution
 					let resultStr = "";
 					let isError = false;
@@ -785,14 +795,21 @@ Always verify your edits and prioritize safety.`;
 						} else {
 							try {
 								const res = await Promise.resolve(toolInstance.execute(sanitizedInput));
-								resultStr = res.result;
-								isError = res.isError;
-							} catch (err: any) {
-								resultStr = `Error executing tool: ${err.message}`;
+								resultStr = typeof res?.result === "string" ? res.result : String(res?.result ?? "");
+								isError = Boolean(res?.isError);
+							} catch (err: unknown) {
+								const errMsg =
+									err instanceof Error
+										? err.message
+										: typeof err === "object" && err !== null
+											? JSON.stringify(err)
+											: String(err ?? "Unknown error");
+								resultStr = `Error executing tool: ${errMsg}`;
 								isError = true;
 							}
 						}
 					}
+
 
 					const toolResultEvt: ToolResultEvent = {
 						type: "tool_result",

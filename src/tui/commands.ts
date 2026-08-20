@@ -1,6 +1,9 @@
 import { spawn as nodeSpawn } from "node:child_process";
 import { SkillRegistry } from "../skills/registry.ts";
 import { formatCost } from "./cost.ts";
+import { getNextCronTime, parseCron, parseDuration } from "../cron/parser.ts";
+import { ScheduleStore } from "../cron/store.ts";
+import type { ScheduleType, StoredSchedule } from "../cron/types.ts";
 import type {
 	CommandContext,
 	CommandResult,
@@ -197,6 +200,7 @@ export const helpCommand: SlashCommand = {
 			{ cmd: "/usage, /stats", desc: "Output token usage breakdown, context %, cost, and duration" },
 			{ cmd: "/skills, /sk", desc: "List discovered and active agent skills" },
 			{ cmd: "/mode [plan|build]", desc: "Inspect or toggle agent mode (plan vs build)" },
+			{ cmd: "/schedule, /sched", desc: "Manage recurring cron jobs and one-shot timers" },
 			{ cmd: "!<command>", desc: "Execute shell command with safety approval (e.g. !git status)" },
 		];
 
@@ -479,6 +483,228 @@ export const modeCommand: SlashCommand = {
 	},
 };
 
+export const scheduleCommand: SlashCommand = {
+	name: "schedule",
+	aliases: ["sched", "cron"],
+	description: "Manage recurring cron jobs and one-shot timers",
+	usage: "/schedule [add|list|cancel|pause|resume]",
+	execute: async (args, context) => {
+		const store = new ScheduleStore({
+			projectRoot: process.cwd(),
+		});
+
+		const sub = args[0]?.toLowerCase().trim();
+
+		if (!sub || sub === "list") {
+			const schedules = await store.list();
+			if (schedules.length === 0) {
+				context.output(
+					"No active schedules found. Use '/schedule add <cron-or-duration> <prompt>' to create one.\n",
+				);
+				return { handled: true };
+			}
+
+			let out = `\n=== Active Schedules (${schedules.length}) ===\n`;
+			for (const s of schedules) {
+				const nextStr = s.nextRunAt ? new Date(s.nextRunAt).toLocaleString() : "N/A";
+				out += `* [${s.id}] (${s.type}: ${s.expression}) [${s.status}]\n`;
+				out += `  Prompt: "${s.prompt}"\n`;
+				out += `  Next run: ${nextStr} (Runs: ${s.runCount})\n`;
+			}
+			out += "\n";
+			context.output(out);
+			return { handled: true };
+		}
+
+		if (sub === "add") {
+			const rawArgs = args.slice(1);
+			if (rawArgs.length === 0) {
+				context.output(
+					"Usage: /schedule add <cron-or-duration> <prompt>\nExamples:\n  /schedule add \"*/5 * * * *\" Check git status\n  /schedule add 10m Run test suite\n",
+				);
+				return { handled: true };
+			}
+
+			let scheduleExpr = "";
+			let prompt = "";
+			let isDuration = false;
+			let durationMs = 0;
+
+			// Case 1: First argument is a relative duration (e.g. 30s, 10m, 2h, 500ms, 1d, 1w)
+			const firstToken = rawArgs[0].replace(/^["']|["']$/g, "").trim();
+			try {
+				durationMs = parseDuration(firstToken);
+				isDuration = true;
+				scheduleExpr = firstToken;
+				prompt = rawArgs.slice(1).join(" ").replace(/^["']|["']$/g, "").trim();
+			} catch {
+				// Case 2: First argument is already a 5-field cron string (e.g. "*/10 * * * *")
+				try {
+					parseCron(firstToken);
+					scheduleExpr = firstToken;
+					prompt = rawArgs.slice(1).join(" ").replace(/^["']|["']$/g, "").trim();
+					isDuration = false;
+				} catch {
+					// Case 3: Space-separated 5-field cron tokens (e.g. ["*/5", "*", "*", "*", "*", "Run", "test"])
+					if (rawArgs.length >= 6) {
+						const potentialCronTokens = rawArgs
+							.slice(0, 5)
+							.map((t) => t.replace(/^["']|["']$/g, ""));
+						const testCron = potentialCronTokens.join(" ");
+						try {
+							parseCron(testCron);
+							scheduleExpr = testCron;
+							prompt = rawArgs.slice(5).join(" ").replace(/^["']|["']$/g, "").trim();
+							isDuration = false;
+						} catch {
+							// Fall through
+						}
+					}
+
+					if (!scheduleExpr) {
+						// Case 4: Joined string fallback
+						const joined = rawArgs.join(" ").trim();
+						const quoteMatch =
+							joined.match(/^\s*(["'])(.+?)\1\s+(.+)$/) || joined.match(/^(\S+)\s+(.+)$/);
+						if (quoteMatch) {
+							const candidateSched = (quoteMatch[2] || quoteMatch[1]).replace(/^["']|["']$/g, "");
+							const candidatePrompt = quoteMatch[3];
+							try {
+								durationMs = parseDuration(candidateSched);
+								isDuration = true;
+								scheduleExpr = candidateSched;
+								prompt = candidatePrompt.trim();
+							} catch {
+								try {
+									parseCron(candidateSched);
+									isDuration = false;
+									scheduleExpr = candidateSched;
+									prompt = candidatePrompt.trim();
+								} catch {
+									// Invalid
+								}
+							}
+						}
+					}
+				}
+			}
+
+
+			if (!scheduleExpr || !prompt) {
+				context.output(
+					'Error: Invalid schedule expression. Must be a 5-field cron (e.g. "*/5 * * * *") or duration (e.g. "30s", "10m", "2h").\n',
+				);
+				return { handled: true };
+			}
+
+			const now = new Date();
+			let nextRunAt: string;
+			const type: ScheduleType = isDuration ? "timer" : "cron";
+
+			if (isDuration) {
+				nextRunAt = new Date(now.getTime() + durationMs).toISOString();
+			} else {
+				nextRunAt = getNextCronTime(scheduleExpr, now).toISOString();
+			}
+
+			const id = `${type}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+			const record: StoredSchedule = {
+				id,
+				type,
+				expression: scheduleExpr,
+				prompt,
+				status: "active",
+				createdAt: now.toISOString(),
+				updatedAt: now.toISOString(),
+				nextRunAt,
+				runCount: 0,
+				errorCount: 0,
+				maxRuns: isDuration ? 1 : undefined,
+			};
+
+			await store.add(record);
+
+			const nextRunStr = new Date(nextRunAt).toLocaleString();
+			context.output(
+				`Successfully scheduled job "${id}" (Type: ${type}, Schedule: ${scheduleExpr}).\nNext run: ${nextRunStr} | Prompt: "${prompt}"\n`,
+			);
+			return { handled: true };
+		}
+
+		if (sub === "cancel" || sub === "delete" || sub === "remove") {
+			const id = args[1]?.trim();
+			if (!id) {
+				context.output("Usage: /schedule cancel <id>\n");
+				return { handled: true };
+			}
+
+			const existing = await store.get(id);
+			if (!existing) {
+				context.output(`Error: Schedule with ID "${id}" not found.\n`);
+				return { handled: true };
+			}
+
+			await store.remove(id);
+			context.output(`Schedule "${id}" cancelled successfully.\n`);
+			return { handled: true };
+		}
+
+		if (sub === "pause") {
+			const id = args[1]?.trim();
+			if (!id) {
+				context.output("Usage: /schedule pause <id>\n");
+				return { handled: true };
+			}
+
+			const existing = await store.get(id);
+			if (!existing) {
+				context.output(`Error: Schedule with ID "${id}" not found.\n`);
+				return { handled: true };
+			}
+
+			await store.update(id, { status: "paused", nextRunAt: undefined });
+			context.output(`Schedule "${id}" paused successfully.\n`);
+			return { handled: true };
+		}
+
+		if (sub === "resume") {
+			const id = args[1]?.trim();
+			if (!id) {
+				context.output("Usage: /schedule resume <id>\n");
+				return { handled: true };
+			}
+
+			const existing = await store.get(id);
+			if (!existing) {
+				context.output(`Error: Schedule with ID "${id}" not found.\n`);
+				return { handled: true };
+			}
+
+			const now = new Date();
+			let nextRunAt: string | undefined;
+			try {
+				if (existing.type === "cron") {
+					nextRunAt = getNextCronTime(existing.expression, now).toISOString();
+				} else {
+					const durationMs = parseDuration(existing.expression);
+					nextRunAt = new Date(now.getTime() + durationMs).toISOString();
+				}
+			} catch {
+				nextRunAt = undefined;
+			}
+
+			await store.update(id, { status: "active", nextRunAt });
+			context.output(`Schedule "${id}" resumed successfully.\n`);
+			return { handled: true };
+		}
+
+		context.output(
+			`Unknown schedule action: "${args[0]}". Available actions: add, list, cancel, pause, resume\n`,
+		);
+		return { handled: true };
+	},
+};
+
 export const BUILTIN_COMMANDS: SlashCommand[] = [
 	helpCommand,
 	clearCommand,
@@ -489,7 +715,9 @@ export const BUILTIN_COMMANDS: SlashCommand[] = [
 	usageCommand,
 	skillsCommand,
 	modeCommand,
+	scheduleCommand,
 ];
+
 
 /**
  * SlashCommandRegistry

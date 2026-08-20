@@ -21,6 +21,7 @@ import { ToolRegistry } from "../tools/registry.ts";
 import { startRepl } from "../tui/repl.ts";
 import { GatewayServer } from "../gateway/server.ts";
 import { registerSkillsCommands } from "./skills.ts";
+import { registerCronCommands } from "./cron.ts";
 
 /**
  * Reads all buffered data from process.stdin until EOF
@@ -356,6 +357,7 @@ export function buildCli(): Command {
 		});
 
 	registerSkillsCommands(prog);
+	registerCronCommands(prog);
 
 	prog
 		.command("run [prompt]")

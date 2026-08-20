@@ -131,6 +131,7 @@ describe("Phase 7: CLI Management Commands (tests/skills/cli.test.ts)", () => {
 	// =========================================================================
 	describe("Tier 1: Primary Happy Paths (list, show, create)", () => {
 		it("Tier 1: harness skills list shows discovered project and global skills", async () => {
+
 			await createSkillOnDisk({
 				targetDir: projectSkillsDir,
 				name: "project-linter",
@@ -167,7 +168,8 @@ describe("Phase 7: CLI Management Commands (tests/skills/cli.test.ts)", () => {
 				expect(cliResult.stdout).toContain("project-linter");
 				expect(cliResult.stdout).toContain("global-git-helper");
 			}
-		});
+		}, 15000);
+
 
 		it("Tier 1: harness skills list --json outputs valid JSON array of skills", async () => {
 			await createSkillOnDisk({

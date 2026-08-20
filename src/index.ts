@@ -23,3 +23,16 @@ export {
 	type HarnessConfig,
 	type ProviderConfig,
 } from "./config/index.ts";
+
+// Re-export Phase 12 Cron & Schedule subsystem
+export {
+	CronScheduler,
+	ScheduleStore,
+	parseCron,
+	parseDuration,
+	matchesCron,
+	getNextCronTime,
+	formatScheduleExpression,
+} from "./cron/index.ts";
+export * from "./cron/types.ts";
+

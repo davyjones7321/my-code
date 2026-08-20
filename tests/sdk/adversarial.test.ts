@@ -158,14 +158,17 @@ describe("SDK Adversarial & Empirical Stress Test Suite", () => {
 			const p4 = session.send("Turn 4 (concurrent collision)");
 			const p5 = session.send("Turn 5 (concurrent collision)");
 
+			// Resolve p1 on next tick so Promise.allSettled can complete
+			setTimeout(() => {
+				deferred.resolve({
+					content: [{ type: "text", text: "P1 success" }],
+					usage: { inputTokens: 5, outputTokens: 5 },
+				});
+			}, 10);
+
 			// p2..p5 should immediately reject synchronously or on first tick
 			const results = await Promise.allSettled([p1, p2, p3, p4, p5]);
 
-			// Resolve p1
-			deferred.resolve({
-				content: [{ type: "text", text: "P1 success" }],
-				usage: { inputTokens: 5, outputTokens: 5 },
-			});
 
 			const [res1, ...others] = results;
 			expect(res1.status).toBe("fulfilled");
@@ -538,10 +541,12 @@ describe("SDK Adversarial & Empirical Stress Test Suite", () => {
 			}
 
 			// Subsequent turn should execute without issue
+			provider.clear();
 			provider.queueTextResponse("Recovered after approval cancel");
 			const r2 = await session.send("New prompt");
 			expect(r2.response).toBe("Recovered after approval cancel");
 		});
+
 
 		it("ADV-ABORT-03: multiple 50x rapid redundant abort() calls before, during, and after turn", async () => {
 			const harness = new Harness({ loadDiskConfig: false, projectRoot: tempDir });
@@ -619,10 +624,12 @@ describe("SDK Adversarial & Empirical Stress Test Suite", () => {
 			await stream.return(undefined as any);
 
 			// Session execution state must be unlocked
+			provider.clear();
 			provider.queueTextResponse("Success after generator return");
 			const result = await session.send("New prompt");
 			expect(result.response).toBe("Success after generator return");
 		});
+
 	});
 
 	// =========================================================================
