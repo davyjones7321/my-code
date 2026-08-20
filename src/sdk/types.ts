@@ -95,6 +95,9 @@ export interface SDKSessionOptions {
 	/** Unique session identifier */
 	id?: string;
 
+	/** Human-readable session name */
+	sessionName?: string;
+
 	/** Provider instance or provider name to use for this session */
 	provider?: string | Provider;
 

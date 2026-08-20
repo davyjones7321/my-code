@@ -36,6 +36,7 @@ import type {
  * approval interception, real-time event streaming, token accumulation, and cost tracking.
  */
 export class HarnessSession {
+	public readonly id: string;
 	private harness: Harness;
 	private session: ReplSession;
 	private providerRegistry: ProviderRegistry;
@@ -60,6 +61,7 @@ export class HarnessSession {
 	private doneListeners: Set<DoneListener> = new Set();
 
 	constructor(harness: Harness, options: SDKSessionOptions = {}) {
+		this.id = options.id || `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 		this.harness = harness;
 		const harnessConfig = harness.getConfig();
 		const harnessOptions = harness.getOptions();
@@ -217,6 +219,13 @@ Always verify your edits and prioritize safety.`;
 	 */
 	public getReplSession(): ReplSession {
 		return this.session;
+	}
+
+	/**
+	 * Get the total completed turns count in this session.
+	 */
+	public getTurnCount(): number {
+		return this.session.getState().turnCount;
 	}
 
 	/**

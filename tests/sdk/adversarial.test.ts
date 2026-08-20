@@ -664,7 +664,7 @@ describe("SDK Adversarial & Empirical Stress Test Suite", () => {
 
 			// A healthy listener to ensure it still receives events
 			const healthyEvents: SDKEvent[] = [];
-			session.on("event", (e) => healthyEvents.push(e));
+			session.on("event", (e: any) => healthyEvents.push(e));
 
 			const result = await session.send("Test error resilience");
 			expect(result.response).toBe("Completed despite throwing listeners.");

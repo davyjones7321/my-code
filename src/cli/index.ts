@@ -19,6 +19,7 @@ import { ProviderRegistry } from "../providers/registry.ts";
 import { registerBuiltinTools } from "../tools/defaults.ts";
 import { ToolRegistry } from "../tools/registry.ts";
 import { startRepl } from "../tui/repl.ts";
+import { GatewayServer } from "../gateway/server.ts";
 import { registerSkillsCommands } from "./skills.ts";
 
 /**
@@ -322,6 +323,36 @@ export function buildCli(): Command {
 			const defaultConfig = loadConfig(configPath);
 			saveConfig(defaultConfig, configPath);
 			console.log(chalk.green(`Initialized config at ${configPath}`));
+		});
+
+	prog
+		.command("serve")
+		.description("Launch the Multi-Platform HTTP & WebSocket Gateway Server")
+		.option("--port <number>", "Port to listen on (default: 3000)", parseInt)
+		.option("--host <string>", "Host to bind to (default: 0.0.0.0)")
+		.option("-t, --token <string>", "Bearer token for API authentication")
+		.option("-p, --provider <name>", "Default LLM provider")
+		.option("-m, --model <name>", "Default LLM model")
+		.option("--plan", "Run in read-only plan mode")
+		.option("--approval <mode>", "Tool approval mode (auto, manual, yolo)")
+		.action(async (options) => {
+			const gateway = new GatewayServer({
+				port: options.port,
+				host: options.host,
+				authToken: options.token,
+				defaultProvider: options.provider,
+				defaultModel: options.model,
+				mode: options.plan ? "plan" : "build",
+				approvalMode: options.approval,
+			});
+			const { port, url } = await gateway.start();
+			console.log(chalk.bold.green(`\n🌐 Harness Multi-Platform Gateway active at ${url}`));
+			console.log(chalk.gray(`- REST API: ${url}/api/v1/sessions`));
+			console.log(chalk.gray(`- WebSocket: ws://${options.host || "localhost"}:${port}/api/v1/ws`));
+			if (options.token) {
+				console.log(chalk.yellow(`- Authentication: Bearer token active`));
+			}
+			console.log(chalk.gray("Press Ctrl+C to stop server.\n"));
 		});
 
 	registerSkillsCommands(prog);
