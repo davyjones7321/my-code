@@ -255,6 +255,18 @@ Always verify your edits and prioritize safety.`,
 					break;
 			}
 		}
+
+		if ((options as any).verify) {
+			const { VerificationEngine } = await import("../verifier/engine.ts");
+			const engine = new VerificationEngine(projectRoot);
+			const report = await engine.verify();
+			if (isTTY) {
+				console.log(chalk.bold("\n🔍 Verification Pass:"));
+				console.log(report.summary);
+			} else {
+				console.log(`\nVerification Pass:\n${report.summary}`);
+			}
+		}
 	} catch (error: any) {
 		if (isTTY) {
 			console.error(chalk.red(`Fatal error: ${error.message}`));
@@ -366,6 +378,7 @@ export function buildCli(): Command {
 		.option("-m, --model <name>", "Model to use (overrides model in config)")
 		.option("--plan", "Run in read-only plan mode")
 		.option("--approval <mode>", "Tool approval mode (auto, manual, yolo)")
+		.option("-v, --verify", "Run verification quality checks after turn")
 		.option("-i, --interactive", "Force interactive REPL mode")
 		.action(async (prompt, options) => {
 			const mergedOpts = { ...prog.opts(), ...(options || {}) };

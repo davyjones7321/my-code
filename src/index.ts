@@ -36,3 +36,5 @@ export {
 } from "./cron/index.ts";
 export * from "./cron/types.ts";
 
+// Re-export Phase 13 Verifier & Self-Healing subsystem
+export * from "./verifier/index.ts";

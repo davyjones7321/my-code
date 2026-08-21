@@ -10,6 +10,8 @@ import type { Provider } from "../providers/base.ts";
 import { ProviderRegistry } from "../providers/registry.ts";
 import { registerBuiltinTools } from "../tools/defaults.ts";
 import { ToolRegistry } from "../tools/registry.ts";
+import { VerificationEngine } from "../verifier/engine.ts";
+import type { VerificationCheck, VerificationReport } from "../verifier/types.ts";
 import { HarnessSession } from "./session.ts";
 import type { HarnessOptions, SDKSessionOptions, Tool } from "./types.ts";
 
@@ -212,6 +214,14 @@ export class Harness {
 	 */
 	public getToolRegistry(): ToolRegistry {
 		return this.toolRegistry;
+	}
+
+	/**
+	 * Run automated verification quality checks on the active project root.
+	 */
+	public async verify(checks?: VerificationCheck[]): Promise<VerificationReport> {
+		const engine = new VerificationEngine(this.projectRoot, checks);
+		return engine.verify();
 	}
 
 	/**

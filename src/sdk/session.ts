@@ -4,6 +4,8 @@ import type { Provider, ProviderCallConfig, ProviderResponse } from "../provider
 import { ProviderRegistry } from "../providers/registry.ts";
 import { ToolRegistry } from "../tools/registry.ts";
 import { type ReplTurn, ReplSession } from "../tui/session.ts";
+import { VerificationEngine } from "../verifier/engine.ts";
+import type { VerificationCheck, VerificationReport } from "../verifier/types.ts";
 import type { Harness } from "./harness.ts";
 import type {
 	ApprovalCallback,
@@ -226,6 +228,14 @@ Always verify your edits and prioritize safety.`;
 	 */
 	public getTurnCount(): number {
 		return this.session.getState().turnCount;
+	}
+
+	/**
+	 * Run automated verification quality checks on the session project root.
+	 */
+	public async verify(checks?: VerificationCheck[]): Promise<VerificationReport> {
+		const engine = new VerificationEngine(this.projectRoot, checks);
+		return engine.verify();
 	}
 
 	/**
