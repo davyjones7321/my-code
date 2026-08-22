@@ -16,6 +16,8 @@
 		"typecheck": "bun x tsc --noEmit",
 		"lint": "bun x @biomejs/biome check --write .",
 		"test": "bun test",
+		"build:binary": "bun run scripts/compile.ts",
+		"build:all": "bun run scripts/compile.ts --all",
 		"harness": "bun run src/cli/index.ts"
 	},
 	"devDependencies": {

@@ -22,6 +22,7 @@ import { startRepl } from "../tui/repl.ts";
 import { GatewayServer } from "../gateway/server.ts";
 import { registerSkillsCommands } from "./skills.ts";
 import { registerCronCommands } from "./cron.ts";
+import { formatBuildInfo, getBuildInfo } from "./build-info.ts";
 
 /**
  * Reads all buffered data from process.stdin until EOF
@@ -286,10 +287,10 @@ export function buildCli(): Command {
 	// Read package.json for version
 	const __dirname = path.dirname(fileURLToPath(import.meta.url));
 	const pkgPath = path.join(__dirname, "..", "..", "package.json");
-	let version = "0.0.0";
+	let version = "0.1.0";
 	try {
 		const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-		version = pkg.version || "0.0.0";
+		version = pkg.version || "0.1.0";
 	} catch {
 		// fallback
 	}
@@ -303,7 +304,13 @@ export function buildCli(): Command {
 		.option("--plan", "Run in read-only plan mode")
 		.option("--approval <mode>", "Tool approval mode (auto, manual, yolo)")
 		.option("-i, --interactive", "Launch interactive REPL mode")
+		.option("--build-info", "Display build metadata and diagnostic feature status")
 		.action(async (options) => {
+			if (options.buildInfo) {
+				const info = getBuildInfo();
+				console.log(formatBuildInfo(info));
+				return;
+			}
 			// Handle piped stdin in headless / non-interactive mode
 			if (!process.stdin.isTTY && !options.interactive) {
 				const stdinPrompt = await readAllStdin();
