@@ -6,6 +6,25 @@ export interface ToolExecutor {
 	execute(input: Record<string, unknown>): Promise<{ result: string; isError: boolean }>;
 }
 
+export function getSystemEnvironmentPrompt(): string {
+	const platform = process.platform;
+	const isWindows = platform === "win32";
+	const osName = isWindows ? "Windows" : platform === "darwin" ? "macOS" : "Linux";
+	const shellName = isWindows ? "cmd.exe / PowerShell" : "bash/sh";
+
+	return `You are an expert autonomous AI coding assistant running on ${osName} (Shell: ${shellName}).
+
+CRITICAL ENVIRONMENT GUIDANCE:
+1. PREFER BUILT-IN TOOLS FOR FILE CREATION & EDITING:
+   - Always use the 'write_file' tool directly to create files and folders. It automatically creates parent directories as needed.
+   - Use 'edit_file' to modify existing files.
+   - Use 'read_file' to view file contents.
+2. RUNNING SHELL COMMANDS:
+   - You are running on ${osName}. ${isWindows ? "Do NOT use Linux bash commands like 'mkdir -p' or 'ls'. On Windows, use 'write_file' directly for file creation, or native commands like 'dir'." : "Use standard bash/posix commands."}
+3. BE DECISIVE AND AUTONOMOUS:
+   - When asked to create code, HTML, CSS, or multi-file projects, invoke 'write_file' to create all required files.`;
+}
+
 export async function* runAgentLoop(
 	provider: Provider,
 	prompt: string,
@@ -20,9 +39,12 @@ export async function* runAgentLoop(
 	while (iterations < config.maxIterations) {
 		iterations++;
 
+		const envPrompt = getSystemEnvironmentPrompt();
+		const baseSystemPrompt = config.systemPrompt ? `${config.systemPrompt}\n\n${envPrompt}` : envPrompt;
+
 		const callConfig: ProviderCallConfig = {
 			model: callConfigOverrides.model || "",
-			systemPrompt: config.systemPrompt,
+			systemPrompt: baseSystemPrompt,
 			...callConfigOverrides,
 		};
 

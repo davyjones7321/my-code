@@ -57,6 +57,17 @@ export async function compileBinary(options: CompileOptions = {}): Promise<{ suc
 
 		console.log(`✅ Successfully compiled ${outFile}`);
 		outFiles.push(outFile);
+
+		// Also create my-code binary aliases
+		const myCodeFile = path.resolve(outDir, `my-code-${tgt}${ext}`);
+		fs.copyFileSync(outFile, myCodeFile);
+		outFiles.push(myCodeFile);
+
+		const genericMyCode = path.resolve(outDir, `my-code${ext}`);
+		fs.copyFileSync(outFile, genericMyCode);
+		if (!outFiles.includes(genericMyCode)) {
+			outFiles.push(genericMyCode);
+		}
 	}
 
 	return { success: true, outFiles };

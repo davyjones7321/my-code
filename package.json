@@ -9,6 +9,7 @@
 		".": "./src/index.ts"
 	},
 	"bin": {
+		"my-code": "./src/cli/index.ts",
 		"harness": "./src/cli/index.ts"
 	},
 	"scripts": {

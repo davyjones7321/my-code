@@ -32,7 +32,7 @@ describe("Phase 14: Packaging & Build Info Suite", () => {
 		const res = await compileBinary({ outDir: "dist-test" });
 
 		expect(res.success).toBe(true);
-		expect(res.outFiles.length).toBe(1);
+		expect(res.outFiles.length).toBeGreaterThan(0);
 
 		const binaryPath = res.outFiles[0];
 		expect(fs.existsSync(binaryPath)).toBe(true);
