@@ -76,7 +76,13 @@ export class AnthropicProvider implements Provider {
 			body.temperature = config.temperature;
 		}
 
-		const response = await fetch(this.baseUrl, {
+		if (!this.apiKey || this.apiKey.trim() === "" || this.apiKey.includes("YOUR_")) {
+			throw new Error(
+				`No API key configured for provider "${this.name}". Please run 'my-code setup' or set the ANTHROPIC_API_KEY environment variable.`,
+			);
+		}
+
+		const response = await fetch(`${this.baseUrl}/messages`, {
 			method: "POST",
 			headers: {
 				"x-api-key": this.apiKey,

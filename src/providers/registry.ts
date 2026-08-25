@@ -62,7 +62,7 @@ export class ProviderRegistry {
 				} else if (name.toLowerCase().includes("openai") && envOpenAI) {
 					apiKey = envOpenAI;
 				} else {
-					apiKey = envOpenRouter || envAnthropic || envOpenAI || apiKey;
+					apiKey = envOpenRouter || envAnthropic || envOpenAI || "";
 				}
 			}
 
@@ -76,6 +76,10 @@ export class ProviderRegistry {
 				!isOpenRouter &&
 				(name.toLowerCase().includes("anthropic") ||
 					(providerConfig.model && providerConfig.model.startsWith("claude")));
+
+			if (!apiKey && !isOllama) {
+				continue; // Skip registering unauthenticated provider if no key is present
+			}
 
 			if (isOpenRouter) {
 				provider = new OpenAIProvider(

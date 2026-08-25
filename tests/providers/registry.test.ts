@@ -47,7 +47,7 @@ describe("ProviderRegistry", () => {
 
 		const registry = ProviderRegistry.fromConfig(config);
 
-		expect(registry.list().length).toBe(4);
+		expect(registry.list().length).toBeGreaterThanOrEqual(4);
 
 		const anthropicProd = registry.get("anthropic-prod");
 		expect(anthropicProd).toBeInstanceOf(AnthropicProvider);

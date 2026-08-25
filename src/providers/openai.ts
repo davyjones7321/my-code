@@ -44,6 +44,13 @@ export class OpenAIProvider implements Provider {
 			});
 		}
 
+		if (!this.apiKey || this.apiKey.trim() === "" || this.apiKey.includes("YOUR_")) {
+			const envVarName = this.name.toUpperCase().includes("OPENROUTER") ? "OPENROUTER_API_KEY" : "OPENAI_API_KEY";
+			throw new Error(
+				`No API key configured for provider "${this.name}". Please run 'my-code setup' or set the ${envVarName} environment variable.`,
+			);
+		}
+
 		const response = await fetch(`${this.baseUrl}/chat/completions`, {
 			method: "POST",
 			headers: {
