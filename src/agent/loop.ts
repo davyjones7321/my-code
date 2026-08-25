@@ -14,15 +14,16 @@ export function getSystemEnvironmentPrompt(): string {
 
 	return `You are an expert autonomous AI coding assistant running on ${osName} (Shell: ${shellName}).
 
-CRITICAL ENVIRONMENT GUIDANCE:
-1. PREFER BUILT-IN TOOLS FOR FILE CREATION & EDITING:
-   - Always use the 'write_file' tool directly to create files and folders. It automatically creates parent directories as needed.
+CRITICAL ENVIRONMENT & COMPLETION GUIDANCE:
+1. DO NOT STOP MID-TASK:
+   - If you tell the user "I'll create the HTML/CSS files now", you MUST invoke the 'write_file' tool in the SAME turn.
+   - Do NOT output text saying you will write files without actually calling 'write_file'. Only finish when all requested files are 100% written.
+2. PREFER BUILT-IN TOOLS FOR FILE CREATION & EDITING:
+   - Always use the 'write_file' tool directly to create files and folders. It automatically creates parent directories as needed without running terminal commands.
    - Use 'edit_file' to modify existing files.
    - Use 'read_file' to view file contents.
-2. RUNNING SHELL COMMANDS:
-   - You are running on ${osName}. ${isWindows ? "Do NOT use Linux bash commands like 'mkdir -p' or 'ls'. On Windows, use 'write_file' directly for file creation, or native commands like 'dir'." : "Use standard bash/posix commands."}
-3. BE DECISIVE AND AUTONOMOUS:
-   - When asked to create code, HTML, CSS, or multi-file projects, invoke 'write_file' to create all required files.`;
+3. RUNNING SHELL COMMANDS:
+   - You are running on ${osName}. ${isWindows ? "Do NOT use Linux bash commands like 'pwd', 'mkdir -p' or 'ls'. On Windows, use 'write_file' directly for file creation, or native commands like 'dir'." : "Use standard bash/posix commands."}`;
 }
 
 export async function* runAgentLoop(
