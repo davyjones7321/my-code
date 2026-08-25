@@ -5,6 +5,7 @@ import { createGlobTool } from "./glob.ts";
 import { createGrepTool } from "./grep.ts";
 import type { ToolRegistry } from "./registry.ts";
 import { createShellTool } from "./shell.ts";
+import { fetchUrlTool, searchWebTool } from "./web.ts";
 import { registerSubagentTools } from "../subagents/tools.ts";
 import { registerLSPTools } from "../lsp/tools.ts";
 import type { SubagentManager } from "../subagents/manager.ts";
@@ -18,6 +19,8 @@ export function registerBuiltinTools(registry: ToolRegistry, projectRoot: string
 	registry.register(createGlobTool(projectRoot));
 	registry.register(createGrepTool(projectRoot));
 	registry.register(createShellTool(projectRoot));
+	registry.register(searchWebTool);
+	registry.register(fetchUrlTool);
 }
 
 /**
