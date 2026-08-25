@@ -1,3 +1,4 @@
+import { loadCustomSystemPrompt } from "../config/index.ts";
 import type { Provider, ProviderCallConfig } from "../providers/base.ts";
 import type { AgentLoopConfig, ContentBlock, LoopEvent, Message } from "./types.ts";
 
@@ -6,13 +7,18 @@ export interface ToolExecutor {
 	execute(input: Record<string, unknown>): Promise<{ result: string; isError: boolean }>;
 }
 
-export function getSystemEnvironmentPrompt(): string {
+export function getSystemEnvironmentPrompt(projectRoot: string = process.cwd()): string {
 	const platform = process.platform;
 	const isWindows = platform === "win32";
 	const osName = isWindows ? "Windows" : platform === "darwin" ? "macOS" : "Linux";
 	const shellName = isWindows ? "cmd.exe / PowerShell" : "bash/sh";
 
-	return `You are an expert autonomous AI coding assistant running on ${osName} (Shell: ${shellName}).
+	const { content: customPrompt, sourceFile } = loadCustomSystemPrompt(projectRoot);
+	const customSection = customPrompt
+		? `\n\nCUSTOM AGENT INSTRUCTIONS (${sourceFile}):\n${customPrompt}\n`
+		: "";
+
+	return `You are an expert autonomous AI coding assistant running on ${osName} (Shell: ${shellName}).${customSection}
 
 CRITICAL ENVIRONMENT & COMPLETION GUIDANCE:
 1. DO NOT STOP MID-TASK:

@@ -70,7 +70,37 @@ export function loadDotEnvFiles(projectRoot: string = process.cwd()): void {
 		}
 	}
 }
+/**
+ * Searches for custom agent prompt files (AGENT.md, SOUL.md, CLAUDE.md, SYSTEM.md)
+ * in project root and global user home directory (~/.harness/SOUL.md).
+ * Returns concatenated prompt content and source filename if found.
+ */
+export function loadCustomSystemPrompt(projectRoot: string = process.cwd()): { content: string; sourceFile?: string } {
+	const candidates = [
+		{ path: path.join(projectRoot, "AGENT.md"), name: "AGENT.md" },
+		{ path: path.join(projectRoot, "SOUL.md"), name: "SOUL.md" },
+		{ path: path.join(projectRoot, "CLAUDE.md"), name: "CLAUDE.md" },
+		{ path: path.join(projectRoot, "SYSTEM.md"), name: "SYSTEM.md" },
+		{ path: path.join(projectRoot, ".harness", "SOUL.md"), name: ".harness/SOUL.md" },
+		{ path: path.join(getConfigDir(), "SOUL.md"), name: "~/.harness/SOUL.md" },
+		{ path: path.join(getConfigDir(), "AGENT.md"), name: "~/.harness/AGENT.md" },
+	];
 
+	for (const candidate of candidates) {
+		if (fs.existsSync(candidate.path)) {
+			try {
+				const content = fs.readFileSync(candidate.path, "utf8").trim();
+				if (content) {
+					return { content, sourceFile: candidate.name };
+				}
+			} catch {
+				// Ignore unreadable prompt files
+			}
+		}
+	}
+
+	return { content: "" };
+}
 /**
  * Loads and parses a config file from the given path.
  * Returns null if file doesn't exist.
