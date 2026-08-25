@@ -22,6 +22,7 @@ import { startRepl } from "../tui/repl.ts";
 import { GatewayServer } from "../gateway/server.ts";
 import { registerSkillsCommands } from "./skills.ts";
 import { registerCronCommands } from "./cron.ts";
+import { registerSetupCommands } from "./setup.ts";
 import { formatBuildInfo, getBuildInfo } from "./build-info.ts";
 
 /**
@@ -377,6 +378,7 @@ export function buildCli(): Command {
 
 	registerSkillsCommands(prog);
 	registerCronCommands(prog);
+	registerSetupCommands(prog);
 
 	prog
 		.command("run [prompt]")

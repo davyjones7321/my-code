@@ -39,10 +39,44 @@ export function getConfigPath(): string {
 }
 
 /**
+ * Loads .env files from global user home (~/.harness/.env) and project root (.env)
+ * into process.env if not already set.
+ */
+export function loadDotEnvFiles(projectRoot: string = process.cwd()): void {
+	const pathsToTry = [
+		path.join(getConfigDir(), ".env"),
+		path.join(projectRoot, ".env"),
+	];
+
+	for (const envPath of pathsToTry) {
+		if (fs.existsSync(envPath)) {
+			try {
+				const content = fs.readFileSync(envPath, "utf8");
+				const lines = content.split("\n");
+				for (const line of lines) {
+					const trimmed = line.trim();
+					if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
+						const [key, ...valParts] = trimmed.split("=");
+						const keyName = key.trim();
+						const val = valParts.join("=").trim().replace(/^["']|["']$/g, "");
+						if (keyName && !process.env[keyName]) {
+							process.env[keyName] = val;
+						}
+					}
+				}
+			} catch {
+				// Ignore unreadable env files
+			}
+		}
+	}
+}
+
+/**
  * Loads and parses a config file from the given path.
  * Returns null if file doesn't exist.
  */
 export function loadConfig(configPath: string = getConfigPath()): HarnessConfig {
+	loadDotEnvFiles(path.dirname(path.dirname(configPath)));
 	try {
 		const content = fs.readFileSync(configPath, "utf8");
 		const parsed = parse(content) as unknown as Partial<HarnessConfig>;
