@@ -1,6 +1,7 @@
 import type { HarnessConfig } from "../config/index.ts";
 import { AnthropicProvider } from "./anthropic.ts";
 import type { Provider } from "./base.ts";
+import { CloudflareProvider } from "./cloudflare.ts";
 import { OllamaProvider } from "./ollama.ts";
 import { OpenAIProvider } from "./openai.ts";
 
@@ -31,6 +32,8 @@ export class ProviderRegistry {
 		const envOpenRouter = process.env.OPENROUTER_API_KEY;
 		const envAnthropic = process.env.ANTHROPIC_API_KEY;
 		const envOpenAI = process.env.OPENAI_API_KEY;
+		const envCloudflareToken = process.env.CLOUDFLARE_API_TOKEN || process.env.CLOUDFLARE_API_KEY;
+		const envCloudflareAccount = process.env.CLOUDFLARE_ACCOUNT_ID;
 
 		if (envOpenRouter) {
 			const p = new OpenAIProvider(envOpenRouter, "https://openrouter.ai/api/v1");
@@ -50,6 +53,11 @@ export class ProviderRegistry {
 			registry.register(p);
 		}
 
+		if (envCloudflareToken && envCloudflareAccount) {
+			const p = new CloudflareProvider(envCloudflareToken, envCloudflareAccount);
+			registry.register(p);
+		}
+
 		for (const [name, providerConfig] of Object.entries(rawProviders)) {
 			let provider: Provider;
 
@@ -66,14 +74,19 @@ export class ProviderRegistry {
 				}
 			}
 
+			const isCloudflare =
+				name.toLowerCase().includes("cloudflare") ||
+				(providerConfig.baseUrl && providerConfig.baseUrl.includes("cloudflare.com"));
 			const isOpenRouter =
-				name.toLowerCase().includes("openrouter") ||
-				(providerConfig.baseUrl && providerConfig.baseUrl.includes("openrouter.ai"));
+				!isCloudflare &&
+				(name.toLowerCase().includes("openrouter") ||
+					(providerConfig.baseUrl && providerConfig.baseUrl.includes("openrouter.ai")));
 			const isOllama =
 				name.toLowerCase().includes("ollama") ||
 				(providerConfig.baseUrl && providerConfig.baseUrl.includes("localhost:11434"));
 			const isAnthropic =
 				!isOpenRouter &&
+				!isCloudflare &&
 				(name.toLowerCase().includes("anthropic") ||
 					(providerConfig.model && providerConfig.model.startsWith("claude")));
 
@@ -81,7 +94,14 @@ export class ProviderRegistry {
 				continue; // Skip registering unauthenticated provider if no key is present
 			}
 
-			if (isOpenRouter) {
+			if (isCloudflare) {
+				provider = new CloudflareProvider(
+					apiKey || envCloudflareToken || "",
+					envCloudflareAccount || "",
+					providerConfig.baseUrl,
+				);
+				provider.name = name;
+			} else if (isOpenRouter) {
 				provider = new OpenAIProvider(
 					apiKey || envOpenRouter || "",
 					providerConfig.baseUrl || "https://openrouter.ai/api/v1",

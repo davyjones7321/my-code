@@ -24,13 +24,15 @@ export async function runInteractiveSetup(): Promise<boolean> {
 		console.log("  2) Anthropic (Claude 3.7 Sonnet / Claude 3.5)");
 		console.log("  3) OpenAI (GPT-4o / O3)");
 		console.log("  4) Ollama (Local LLM)");
+		console.log("  5) Cloudflare Workers AI (High-speed, free neurons)");
 
-		const choice = (await askQuestion(chalk.cyan("\nEnter choice [1-4] (default: 1): "))).trim() || "1";
+		const choice = (await askQuestion(chalk.cyan("\nEnter choice [1-5] (default: 1): "))).trim() || "1";
 
 		let providerName = "openrouter";
 		let defaultModel = "dots-studio/dots-3-note-preview:free";
 		let baseUrl = "https://openrouter.ai/api/v1";
 		let envKeyName = "OPENROUTER_API_KEY";
+		let cfAccountId = "";
 
 		if (choice === "2") {
 			providerName = "anthropic";
@@ -47,6 +49,12 @@ export async function runInteractiveSetup(): Promise<boolean> {
 			defaultModel = "deepseek-coder-v2";
 			baseUrl = "http://localhost:11434/v1";
 			envKeyName = "OLLAMA_API_KEY";
+		} else if (choice === "5") {
+			providerName = "cloudflare";
+			defaultModel = "@cf/meta/llama-3.3-70b-instruct-fp8";
+			envKeyName = "CLOUDFLARE_API_TOKEN";
+			cfAccountId = (await askQuestion(chalk.cyan("\nEnter your Cloudflare Account ID: "))).trim();
+			baseUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`;
 		}
 
 		let apiKey = "";
@@ -75,7 +83,11 @@ export async function runInteractiveSetup(): Promise<boolean> {
 		}
 
 		const globalEnvPath = path.join(configDir, ".env");
-		const envContent = `# my-code Global Environment Config\n${envKeyName}="${apiKey}"\n`;
+		let envContent = `# my-code Global Environment Config\n${envKeyName}="${apiKey}"\n`;
+		if (cfAccountId) {
+			envContent += `CLOUDFLARE_ACCOUNT_ID="${cfAccountId}"\n`;
+			process.env.CLOUDFLARE_ACCOUNT_ID = cfAccountId;
+		}
 		fs.writeFileSync(globalEnvPath, envContent, "utf8");
 		process.env[envKeyName] = apiKey;
 
