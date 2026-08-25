@@ -90,6 +90,13 @@ export async function runInteractiveSetup(): Promise<boolean> {
 		};
 
 		saveConfig(currentConfig, getConfigPath());
+
+		// 3. Save default ~/.harness/SOUL.md if missing
+		const soulPath = path.join(configDir, "SOUL.md");
+		if (!fs.existsSync(soulPath)) {
+			const defaultSoul = `# Agent SOUL & System Instructions\n\n## Persona & Identity\n- You are an expert autonomous AI software engineer and coding assistant.\n\n## Execution Rules\n1. DO NOT STOP MID-TASK: Invoke built-in tools (write_file, edit_file) in the SAME turn until all files are 100% written.\n2. PREFER BUILT-IN TOOLS: Use write_file directly for file creation.\n3. SHELL AWARENESS: Respect OS environment (Windows/cmd.exe vs Posix/Bash).\n`;
+			fs.writeFileSync(soulPath, defaultSoul, "utf8");
+		}
 		rl.close();
 
 		console.log(chalk.green.bold(`\n🎉 Setup Complete!`));

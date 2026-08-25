@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { getSystemEnvironmentPrompt } from "../../src/agent/loop.ts";
 import { loadCustomSystemPrompt } from "../../src/config/index.ts";
 
-describe("Custom Prompt Files (AGENT.md / SOUL.md / CLAUDE.md) Suite", () => {
+describe("Exclusive SOUL.md System Prompt File Suite", () => {
 	let tempDir: string;
 
 	beforeEach(async () => {
@@ -16,12 +16,12 @@ describe("Custom Prompt Files (AGENT.md / SOUL.md / CLAUDE.md) Suite", () => {
 		await fs.promises.rm(tempDir, { recursive: true, force: true });
 	});
 
-	it("should detect and load AGENT.md from project root", () => {
-		const agentMd = path.join(tempDir, "AGENT.md");
-		fs.writeFileSync(agentMd, "# Custom Persona\nBe extra polite and write clean TypeScript code.");
+	it("should detect and load SOUL.md from project root", () => {
+		const soulMd = path.join(tempDir, "SOUL.md");
+		fs.writeFileSync(soulMd, "# Custom Persona\nBe extra polite and write clean TypeScript code.");
 
 		const res = loadCustomSystemPrompt(tempDir);
-		expect(res.sourceFile).toBe("AGENT.md");
+		expect(res.sourceFile).toBe("SOUL.md");
 		expect(res.content).toContain("Be extra polite and write clean TypeScript code.");
 	});
 
