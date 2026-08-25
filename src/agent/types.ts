@@ -59,4 +59,5 @@ export interface AgentLoopConfig {
 	maxIterations: number;
 	systemPrompt: string;
 	tools: ToolDefinition[];
+	projectRoot?: string;
 }

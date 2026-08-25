@@ -46,7 +46,7 @@ export async function* runAgentLoop(
 	while (iterations < config.maxIterations) {
 		iterations++;
 
-		const envPrompt = getSystemEnvironmentPrompt();
+		const envPrompt = getSystemEnvironmentPrompt(config.projectRoot);
 		const baseSystemPrompt = config.systemPrompt ? `${config.systemPrompt}\n\n${envPrompt}` : envPrompt;
 
 		const callConfig: ProviderCallConfig = {

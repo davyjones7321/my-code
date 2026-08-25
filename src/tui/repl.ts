@@ -4,7 +4,7 @@ import * as readline from "node:readline";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 
-import type { ToolExecutor } from "../agent/loop.ts";
+import { getSystemEnvironmentPrompt, type ToolExecutor } from "../agent/loop.ts";
 import type { ContentBlock, LoopEvent, Message, ToolDefinition } from "../agent/types.ts";
 import {
 	type HarnessConfig,
@@ -478,9 +478,7 @@ export class ReplEngine {
 					model: this.currentModel,
 					systemPrompt:
 						(this.config as any).systemPrompt ||
-						`You are an expert autonomous AI coding assistant.
-You have access to tools for inspecting, editing, searching files, running shell commands, and managing memory.
-Always verify your edits and prioritize safety.`,
+						getSystemEnvironmentPrompt(this.projectRoot),
 					maxTokens: (this.config as any).maxTokens,
 				};
 
