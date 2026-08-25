@@ -107,12 +107,22 @@ export class ReplEngine {
 		this.config = mergeConfigs(globalConfig, projectConfig || {});
 
 		// 2. Provider Registry & Model Resolution
-		const providerName = options.providerName || this.config.defaultProvider || "default";
+		let providerName = options.providerName || this.config.defaultProvider || "default";
 		this.providerRegistry = ProviderRegistry.fromConfig(this.config);
 		this.currentProvider = this.providerRegistry.get(providerName);
 
+		// If default provider is missing, fallback to any available registered provider
+		const registeredNames = this.providerRegistry.list();
+		if (!this.currentProvider && registeredNames.length > 0) {
+			providerName = registeredNames.includes(this.config.defaultProvider)
+				? this.config.defaultProvider
+				: registeredNames[0];
+			this.currentProvider = this.providerRegistry.get(providerName);
+			this.config.defaultProvider = providerName;
+		}
+
 		const providerConfig = this.config.providers?.[providerName];
-		this.currentModel = options.modelName || providerConfig?.model || "default";
+		this.currentModel = options.modelName || providerConfig?.model || "dots-studio/dots-3-note-preview:free";
 
 		// 3. Security & Control Layer
 		const effectiveApprovalMode: ReplApprovalMode =
