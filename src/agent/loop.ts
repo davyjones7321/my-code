@@ -1,5 +1,6 @@
 import { loadBrainLearnings, loadCustomSystemPrompt } from "../config/index.ts";
 import type { Provider, ProviderCallConfig } from "../providers/base.ts";
+import { globalPonytailEngine } from "../skills/ponytail.ts";
 import type { AgentLoopConfig, ContentBlock, LoopEvent, Message } from "./types.ts";
 
 export interface ToolExecutor {
@@ -18,8 +19,9 @@ export function getSystemEnvironmentPrompt(projectRoot: string = process.cwd()):
 		? `\n\nCUSTOM AGENT INSTRUCTIONS (${sourceFile}):\n${customPrompt}\n`
 		: "";
 	const brainSection = loadBrainLearnings(projectRoot);
+	const ponytailSection = globalPonytailEngine.getSystemPromptDirective();
 
-	return `You are an expert autonomous AI coding assistant running on ${osName} (Shell: ${shellName}).${customSection}${brainSection}
+	return `You are an expert autonomous AI coding assistant running on ${osName} (Shell: ${shellName}).${customSection}${brainSection}${ponytailSection}
 
 CRITICAL ENVIRONMENT & COMPLETION GUIDANCE:
 1. DO NOT STOP MID-TASK:

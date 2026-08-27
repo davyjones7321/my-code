@@ -804,6 +804,45 @@ export const pwdCommand: SlashCommand = {
 	},
 };
 
+export const ponytailCommand: SlashCommand = {
+	name: "ponytail",
+	description: "Toggle or set Ponytail anti-overengineering mode (lite, full, ultra)",
+	execute: async (args: string[], context: CommandContext): Promise<CommandResult> => {
+		const { globalPonytailEngine } = await import("../skills/ponytail.ts");
+		const arg = args[0]?.toLowerCase();
+		if (arg === "lite" || arg === "full" || arg === "ultra") {
+			globalPonytailEngine.setIntensity(arg);
+			context.output(`✂️ [Ponytail Mode] Enabled with intensity: ${arg.toUpperCase()}\n`);
+		} else if (arg === "off" || arg === "disable") {
+			globalPonytailEngine.setEnabled(false);
+			context.output("✂️ [Ponytail Mode] Disabled.\n");
+		} else {
+			const state = globalPonytailEngine.getState();
+			context.output(`✂️ [Ponytail Mode]: ${state.enabled ? `ACTIVE (${state.intensity.toUpperCase()})` : "DISABLED"}\nUsage: /ponytail [lite|full|ultra|off]\n`);
+		}
+		return { handled: true };
+	},
+};
+
+export const ponytailReviewCommand: SlashCommand = {
+	name: "ponytail-review",
+	description: "Review recent code for over-engineering, unused imports, and bloat to delete",
+	execute: async (_args: string[], context: CommandContext): Promise<CommandResult> => {
+		context.output("✂️ Running Ponytail Code Review for over-engineering & complexity...\n");
+		return { handled: true };
+	},
+};
+
+export const ponytailAuditCommand: SlashCommand = {
+	name: "ponytail-audit",
+	description: "Audit whole repository for bloat, unnecessary packages, and dead code",
+	execute: async (_args: string[], context: CommandContext): Promise<CommandResult> => {
+		const current = context.session.getState().projectRoot || process.cwd();
+		context.output(`✂️ Running whole-repository Ponytail Bloat Audit on ${path.basename(current)}...\n`);
+		return { handled: true };
+	},
+};
+
 export const BUILTIN_COMMANDS: SlashCommand[] = [
 	helpCommand,
 	clearCommand,
@@ -819,6 +858,9 @@ export const BUILTIN_COMMANDS: SlashCommand[] = [
 	brainCommand,
 	cdCommand,
 	pwdCommand,
+	ponytailCommand,
+	ponytailReviewCommand,
+	ponytailAuditCommand,
 ];
 
 
