@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import chalk, { Chalk } from "chalk";
 import { formatCost } from "./cost.ts";
 import type { ReplSessionState, StatusBarOptions } from "./types.ts";
@@ -139,9 +140,11 @@ export function renderStatusBar(
 
 	let statusLine = "";
 
+	const repoName = s.repoName || (s.projectRoot ? path.basename(s.projectRoot) : "default");
+
 	if (columns >= 100) {
 		// === Wide Layout (>= 100 cols) ===
-		// [Provider: anthropic | Model: claude-3-7-sonnet | Mode: BUILD | Turn: 3 | Tokens: 4.2k/128k (3.3%) | Cost: $0.0125 | Time: 01:23]
+		// [Repo: my-harness | Provider: anthropic | Model: claude-3-7-sonnet | Mode: BUILD | Turn: 3 ...]
 		if (useColor) {
 			const modeBadge = isPlan ? color.bold.cyan(modeLabel) : color.bold.green(modeLabel);
 			const costBadge = color.yellow(costFormatted);
@@ -151,6 +154,8 @@ export function renderStatusBar(
 
 			statusLine =
 				color.gray("[") +
+				`Repo: ${color.bold.cyan(repoName)}` +
+				color.gray(" | ") +
 				`Provider: ${color.white(s.providerName)}` +
 				color.gray(" | ") +
 				`Model: ${color.white(s.modelName)}` +
@@ -166,7 +171,7 @@ export function renderStatusBar(
 				`Time: ${color.white(durationFormatted)}` +
 				color.gray("]");
 		} else {
-			statusLine = `[Provider: ${s.providerName} | Model: ${s.modelName} | Mode: ${modeLabel} | Turn: ${safeTurnCount} | Tokens: ${tokensFormatted}/${formatTokens(contextBudget)} (${contextPercentage}%) | Cost: ${costFormatted} | Time: ${durationFormatted}]`;
+			statusLine = `[Repo: ${repoName} | Provider: ${s.providerName} | Model: ${s.modelName} | Mode: ${modeLabel} | Turn: ${safeTurnCount} | Tokens: ${tokensFormatted}/${formatTokens(contextBudget)} (${contextPercentage}%) | Cost: ${costFormatted} | Time: ${durationFormatted}]`;
 		}
 	} else if (columns >= 60) {
 		// === Medium Layout (60–99 cols) ===

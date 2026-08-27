@@ -1,4 +1,6 @@
 import { spawn as nodeSpawn } from "node:child_process";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { SkillRegistry } from "../skills/registry.ts";
 import { formatCost } from "./cost.ts";
 import { getNextCronTime, parseCron, parseDuration } from "../cron/parser.ts";
@@ -756,6 +758,52 @@ export const brainCommand: SlashCommand = {
 	},
 };
 
+export const cdCommand: SlashCommand = {
+	name: "cd",
+	aliases: ["repo"],
+	description: "Dynamically switch active working directory / repository",
+	execute: async (args: string[], context: CommandContext): Promise<CommandResult> => {
+		const targetPath = args.join(" ").trim();
+		if (!targetPath) {
+			const current = context.session.getState().projectRoot || process.cwd();
+			const repoName = path.basename(current);
+			context.output(`📂 Active Repository: ${repoName} (${current})\nUsage: /cd <directory-path>\n`);
+			return { handled: true };
+		}
+
+		const resolved = path.resolve(targetPath);
+		if (!fs.existsSync(resolved)) {
+			context.output(`Error: Directory does not exist: ${resolved}\n`);
+			return { handled: true };
+		}
+
+		if (context.setProjectRoot) {
+			try {
+				context.setProjectRoot(resolved);
+				const repoName = path.basename(resolved);
+				context.output(`📂 Switched active repository to: ${repoName} (${resolved})\n`);
+			} catch (e: any) {
+				context.output(`Error switching repository: ${e.message}\n`);
+			}
+		} else {
+			context.output(`Switched directory to ${resolved}\n`);
+		}
+
+		return { handled: true };
+	},
+};
+
+export const pwdCommand: SlashCommand = {
+	name: "pwd",
+	description: "Display current active repository and working directory",
+	execute: async (_args: string[], context: CommandContext): Promise<CommandResult> => {
+		const current = context.session.getState().projectRoot || process.cwd();
+		const repoName = path.basename(current);
+		context.output(`📂 Active Repository: ${repoName}\nPath: ${current}\n`);
+		return { handled: true };
+	},
+};
+
 export const BUILTIN_COMMANDS: SlashCommand[] = [
 	helpCommand,
 	clearCommand,
@@ -769,6 +817,8 @@ export const BUILTIN_COMMANDS: SlashCommand[] = [
 	scheduleCommand,
 	learnCommand,
 	brainCommand,
+	cdCommand,
+	pwdCommand,
 ];
 
 

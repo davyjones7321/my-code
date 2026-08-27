@@ -304,6 +304,7 @@ export function buildCli(): Command {
 		.option("-m, --model <name>", "Model to use (overrides model in config)")
 		.option("--plan", "Run in read-only plan mode")
 		.option("--approval <mode>", "Tool approval mode (auto, manual, yolo)")
+		.option("-C, --dir <path>", "Target working directory / repository path")
 		.option("-i, --interactive", "Launch interactive REPL mode")
 		.option("--build-info", "Display build metadata and diagnostic feature status")
 		.action(async (options) => {
@@ -327,6 +328,7 @@ export function buildCli(): Command {
 				modelName: options.model,
 				planMode: options.plan,
 				approvalMode: options.approval,
+				projectRoot: options.dir ? path.resolve(options.dir) : process.cwd(),
 				isTTY: process.stdout.isTTY,
 			});
 		});

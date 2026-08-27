@@ -303,6 +303,26 @@ export class ReplEngine {
 	}
 
 	/**
+	 * Dynamically switch the active repository / working directory
+	 */
+	public setProjectRoot(newRoot: string): void {
+		const resolved = path.resolve(newRoot);
+		if (!fs.existsSync(resolved)) {
+			throw new Error(`Directory does not exist: ${resolved}`);
+		}
+		this.projectRoot = resolved;
+		const repoName = path.basename(resolved);
+		this.statusBar.update({ projectRoot: resolved, repoName });
+
+		// Re-initialize tool registry with updated project root
+		this.toolRegistry = new ToolRegistry();
+		registerBuiltinTools(this.toolRegistry, this.projectRoot);
+
+		// Re-initialize context manager with new project root
+		this.contextManager = new ContextManager({ projectRoot: this.projectRoot });
+	}
+
+	/**
 	 * Switch approval mode (auto, manual, yolo)
 	 */
 	public setApprovalMode(mode: ReplApprovalMode): void {
@@ -379,6 +399,9 @@ export class ReplEngine {
 				},
 				setApprovalMode: (mode: ReplApprovalMode) => {
 					this.setApprovalMode(mode);
+				},
+				setProjectRoot: (root: string) => {
+					this.setProjectRoot(root);
 				},
 				clearScreen: () => {
 					if (this.isTTY) {

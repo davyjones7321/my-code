@@ -26,6 +26,8 @@ export interface ReplSessionState {
 	totalTokens: number;
 	estimatedCost: number;
 	startTime: number;
+	repoName?: string;
+	projectRoot?: string;
 }
 
 /** Execution context provided to slash command handlers */
@@ -41,6 +43,7 @@ export interface CommandContext {
 	setProvider?: (provider: Provider, model: string) => void;
 	setMode?: (mode: ReplMode) => void;
 	setApprovalMode?: (mode: ReplApprovalMode) => void;
+	setProjectRoot?: (projectRoot: string) => void;
 	clearScreen?: () => void;
 }
 
