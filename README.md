@@ -163,9 +163,3 @@ bun test
 # Run type check
 bun x tsc --noEmit
 ```
-
----
-
-## 📄 License
-
-MIT License. Designed and built with ❤️.
