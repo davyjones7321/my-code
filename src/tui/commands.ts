@@ -843,6 +843,48 @@ export const ponytailAuditCommand: SlashCommand = {
 	},
 };
 
+export const securityCommand: SlashCommand = {
+	name: "security",
+	description: "Inspect prompt injection defense status and recent audit log events",
+	execute: async (_args: string[], context: CommandContext): Promise<CommandResult> => {
+		const { globalAuditLogger } = await import("../security/governance.ts");
+		const logs = globalAuditLogger.getRecentLogs(10);
+
+		let output = "🛡️ [Security Governance Engine]\nPrompt Injection Defense: ACTIVE\n\nRecent Audit Logs:\n";
+		if (logs.length === 0) {
+			output += "  (No security events logged yet)\n";
+		} else {
+			logs.forEach((l) => {
+				output += `  ${l}\n`;
+			});
+		}
+		output += `\nAudit Log Location: ${globalAuditLogger.getAuditLogPath()}\n`;
+
+		context.output(output);
+		return { handled: true };
+	},
+};
+
+export const guardrailsCommand: SlashCommand = {
+	name: "guardrails",
+	description: "Toggle or inspect OS & Git destructive command safety guardrails",
+	execute: async (args: string[], context: CommandContext): Promise<CommandResult> => {
+		const { globalCommandGuardrails } = await import("../control/guardrails.ts");
+		const arg = args[0]?.toLowerCase();
+
+		if (arg === "off" || arg === "disable") {
+			globalCommandGuardrails.setEnabled(false);
+			context.output("🛡️ [Command Guardrails]: DISABLED\n");
+		} else if (arg === "on" || arg === "enable") {
+			globalCommandGuardrails.setEnabled(true);
+			context.output("🛡️ [Command Guardrails]: ENABLED (Blocking git reset --hard, force push, rm -rf)\n");
+		} else {
+			context.output(`🛡️ [Command Guardrails]: ${globalCommandGuardrails.isEnabled() ? "ACTIVE (Blocking git reset --hard, force push, rm -rf)" : "DISABLED"}\nUsage: /guardrails [on|off]\n`);
+		}
+		return { handled: true };
+	},
+};
+
 export const BUILTIN_COMMANDS: SlashCommand[] = [
 	helpCommand,
 	clearCommand,
@@ -861,6 +903,8 @@ export const BUILTIN_COMMANDS: SlashCommand[] = [
 	ponytailCommand,
 	ponytailReviewCommand,
 	ponytailAuditCommand,
+	securityCommand,
+	guardrailsCommand,
 ];
 
 

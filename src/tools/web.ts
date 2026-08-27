@@ -190,6 +190,21 @@ export const fetchUrlTool: Tool = {
 				.replace(/\n{3,}/g, "\n\n")
 				.trim();
 
+			// Sanitize prompt injections from web content
+			const { globalInjectionScanner } = await import("../security/injection-scanner.ts");
+			const { globalAuditLogger } = await import("../security/governance.ts");
+			const scanRes = globalInjectionScanner.scan(mainText);
+
+			if (scanRes.hasInjection) {
+				globalAuditLogger.logEvent(
+					"injection_detected",
+					`Prompt injection detected on URL: ${targetUrl} [Matches: ${scanRes.matches.join(", ")}]`,
+					"warning",
+				);
+			}
+
+			mainText = scanRes.sanitizedText;
+
 			if (mainText.length > maxLength) {
 				mainText = `${mainText.slice(0, maxLength)}\n\n...[Content truncated at ${maxLength} chars]`;
 			}

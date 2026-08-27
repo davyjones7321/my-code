@@ -21,6 +21,23 @@ export function createShellTool(projectRoot: string): Tool {
 				const cwd = input.cwd as string | undefined;
 				const timeoutMs = (input.timeout as number) || 30000;
 
+				// Check command against security guardrails
+				const { globalCommandGuardrails } = await import("../control/guardrails.ts");
+				const { globalAuditLogger } = await import("../security/governance.ts");
+				const guardrailCheck = globalCommandGuardrails.checkCommand(command);
+
+				if (!guardrailCheck.permitted) {
+					globalAuditLogger.logEvent(
+						"guardrail_blocked",
+						`Blocked command "${command}" [Rule: ${guardrailCheck.ruleName}] Reason: ${guardrailCheck.reason}`,
+						"critical",
+					);
+					return {
+						result: `🛡️ [Command Guardrail Blocked]: ${guardrailCheck.reason}`,
+						isError: true,
+					};
+				}
+
 				const runDir = cwd ? path.resolve(projectRoot, cwd) : projectRoot;
 
 				if (!runDir.startsWith(projectRoot)) {
