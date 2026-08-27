@@ -709,7 +709,7 @@ export const scheduleCommand: SlashCommand = {
 
 export const learnCommand: SlashCommand = {
 	name: "learn",
-	description: "Teach a new rule or lesson to the Hermes Agentic Brain",
+	description: "Teach a new rule or lesson to the Agentic Brain",
 	execute: async (args: string[], context: CommandContext): Promise<CommandResult> => {
 		const ruleText = args.join(" ").trim();
 		if (!ruleText) {
@@ -725,14 +725,14 @@ export const learnCommand: SlashCommand = {
 		const brain = new BrainManager(projectRoot);
 		const rule = brain.addLearning(ruleText);
 
-		context.output(`🧠 [Hermes Brain] Learned new rule [${rule.id}]: "${rule.rule}"\nSaved to ${brain.getLearningsPath()}\n`);
+		context.output(`🧠 [Agentic Brain] Learned new rule [${rule.id}]: "${rule.rule}"\nSaved to ${brain.getLearningsPath()}\n`);
 		return { handled: true };
 	},
 };
 
 export const brainCommand: SlashCommand = {
 	name: "brain",
-	description: "Inspect active learned rules stored in the Hermes Agentic Brain",
+	description: "Inspect active learned rules stored in the Agentic Brain",
 	execute: async (_args: string[], context: CommandContext): Promise<CommandResult> => {
 		const { BrainManager } = await import("../brain/manager.ts");
 		const projectRoot = (context.session && typeof (context.session as any).getState === "function"
@@ -743,11 +743,11 @@ export const brainCommand: SlashCommand = {
 		const rules = brain.getLearnings();
 
 		if (rules.length === 0) {
-			context.output("🧠 [Hermes Brain] No rules stored yet. Use /learn <rule> to teach new lessons.\n");
+			context.output("🧠 [Agentic Brain] No rules stored yet. Use /learn <rule> to teach new lessons.\n");
 			return { handled: true };
 		}
 
-		let output = `🧠 [Hermes Brain] Active Learned Rules (${rules.length} total):\n\n`;
+		let output = `🧠 [Agentic Brain] Active Learned Rules (${rules.length} total):\n\n`;
 		rules.forEach((r, i) => {
 			output += `  ${i + 1}. ${r}\n`;
 		});

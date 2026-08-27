@@ -104,7 +104,8 @@ describe("TUI Adaptive StatusBar Subsystem", () => {
 					lastCommandDurationMs: 83000,
 				});
 
-				expect(raw).toContain("[Provider: anthropic");
+				expect(raw).toContain("Repo:");
+				expect(raw).toContain("Provider: anthropic");
 				expect(raw).toContain("Model: claude-3-7-sonnet");
 				expect(raw).toContain("Mode: BUILD");
 				expect(raw).toContain("Turn: 3");
@@ -134,7 +135,8 @@ describe("TUI Adaptive StatusBar Subsystem", () => {
 				});
 
 				const clean = stripAnsi(colored);
-				expect(clean).toContain("[Provider: anthropic");
+				expect(clean).toContain("Repo:");
+				expect(clean).toContain("Provider: anthropic");
 				expect(clean).toContain("Model: claude-3-7-sonnet");
 				expect(clean).toContain("Mode: BUILD");
 				expect(clean).toContain("Cost: $0.01");

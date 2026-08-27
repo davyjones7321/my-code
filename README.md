@@ -1,6 +1,6 @@
 # 🤖 `my-code` — Autonomous AI Agent CLI & Harness
 
-`my-code` is a powerful, autonomous, model-agnostic AI coding assistant and agentic harness built for Windows, macOS, and Linux. Inspired by Anthropic's Claude Code, OpenAI's Codex, Nous Research's Hermes Agent, and OpenClaw.
+`my-code` is a powerful, autonomous, model-agnostic AI coding assistant and agentic harness built for Windows, macOS, and Linux.
 
 ---
 
@@ -78,7 +78,7 @@ The wizard guides you through selecting your preferred LLM provider:
 
 ## 🌟 Complete Feature Suite & Architecture
 
-### 🧠 1. Hermes-Style Agentic Brain System
+### 🧠 1. Agentic Brain System
 - **Self-Learning Memory**: Stores learned rules, project coding standards, and past bug fixes in human-readable Markdown (`~/.harness/brain/learnings.md` and `./.harness/brain/learnings.md`).
 - **Auto Prompt Injection**: Automatically injects active learned experience into the agent's prompt on every turn so it never repeats a mistake.
 - **Commands**: `/learn <rule>` to teach new lessons, `/brain` to inspect active rules.
@@ -120,7 +120,7 @@ The wizard guides you through selecting your preferred LLM provider:
 | `/pwd` | Display current active repository name and directory path |
 | `/cd <path>` | Switch active repository inside a running session |
 | `/learn <rule>` | Teach a new rule or coding standard to the Agentic Brain |
-| `/brain` | Inspect active learned rules in the Hermes Brain |
+| `/brain` | Inspect active learned rules in the Agentic Brain |
 | `/ponytail [level]` | Set anti-overengineering intensity (`lite`, `full`, `ultra`, `off`) |
 | `/ponytail-review` | Review code changes for over-engineering and complexity |
 | `/ponytail-audit` | Audit whole repository for bloat and dead code |

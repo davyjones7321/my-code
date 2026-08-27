@@ -6,7 +6,7 @@ import { getSystemEnvironmentPrompt } from "../../src/agent/loop.ts";
 import { BrainManager } from "../../src/brain/manager.ts";
 import { loadBrainLearnings } from "../../src/config/index.ts";
 
-describe("Hermes Agentic Brain Suite", () => {
+describe("Agentic Brain Suite", () => {
 	let tempDir: string;
 
 	beforeEach(async () => {
@@ -33,7 +33,7 @@ describe("Hermes Agentic Brain Suite", () => {
 		brain.addLearning("Prefer Tailwind CSS for styling components", "ui", true);
 
 		const promptSection = brain.getPromptSection();
-		expect(promptSection).toContain("HERMES AGENTIC BRAIN - LEARNED RULES & EXPERIENCE");
+		expect(promptSection).toContain("AGENTIC BRAIN - LEARNED RULES & EXPERIENCE");
 		expect(promptSection).toContain("Prefer Tailwind CSS for styling components");
 	});
 
@@ -42,7 +42,7 @@ describe("Hermes Agentic Brain Suite", () => {
 		brain.addLearning("Never use deprecated APIs", "coding", true);
 
 		const sysPrompt = getSystemEnvironmentPrompt(tempDir);
-		expect(sysPrompt).toContain("HERMES AGENTIC BRAIN - LEARNED RULES & EXPERIENCE");
+		expect(sysPrompt).toContain("AGENTIC BRAIN - LEARNED RULES & EXPERIENCE");
 		expect(sysPrompt).toContain("Never use deprecated APIs");
 	});
 });

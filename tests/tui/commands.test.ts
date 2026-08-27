@@ -51,8 +51,8 @@ describe("TUI Slash Commands & Shell Passthrough", () => {
 			const registry = createDefaultRegistry();
 			const list = registry.list();
 
-			expect(list.length).toBe(10);
-			expect(BUILTIN_COMMANDS.length).toBe(10);
+			expect(list.length).toBe(21);
+			expect(BUILTIN_COMMANDS.length).toBe(21);
 		});
 
 		it("should retrieve commands by canonical name and aliases", () => {

@@ -102,7 +102,7 @@ export class BrainManager {
 			return "";
 		}
 
-		let section = "\n\n## HERMES AGENTIC BRAIN - LEARNED RULES & EXPERIENCE:\n";
+		let section = "\n\n## AGENTIC BRAIN - LEARNED RULES & EXPERIENCE:\n";
 		rules.slice(-15).forEach((rule) => {
 			section += `- ${rule}\n`;
 		});

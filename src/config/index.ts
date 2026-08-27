@@ -99,7 +99,7 @@ export function loadCustomSystemPrompt(projectRoot: string = process.cwd()): { c
 }
 
 /**
- * Loads learned rules from Hermes Agentic Brain files (~/.harness/brain/learnings.md)
+ * Loads learned rules from Agentic Brain files (~/.harness/brain/learnings.md)
  */
 export function loadBrainLearnings(projectRoot: string = process.cwd()): string {
 	const globalBrainFile = path.join(getConfigDir(), "brain", "learnings.md");
@@ -125,7 +125,7 @@ export function loadBrainLearnings(projectRoot: string = process.cwd()): string 
 
 	if (rules.length === 0) return "";
 	const uniqueRules = [...new Set(rules)].slice(-15);
-	return `\n\n## HERMES AGENTIC BRAIN - LEARNED RULES & EXPERIENCE:\n${uniqueRules.map((r) => `- ${r}`).join("\n")}\n`;
+	return `\n\n## AGENTIC BRAIN - LEARNED RULES & EXPERIENCE:\n${uniqueRules.map((r) => `- ${r}`).join("\n")}\n`;
 }
 /**
  * Loads and parses a config file from the given path.
