@@ -30,10 +30,22 @@ export function createFileWriteTool(projectRoot: string): Tool {
 					fs.mkdirSync(dir, { recursive: true });
 				}
 
+				const { globalDiffEngine } = await import("./diff.ts");
+				let oldContent = "";
+				if (fs.existsSync(absolutePath)) {
+					try {
+						oldContent = fs.readFileSync(absolutePath, "utf-8");
+						globalDiffEngine.backupFile(absolutePath, oldContent);
+					} catch {
+						// ignore
+					}
+				}
+
 				fs.writeFileSync(absolutePath, content, "utf-8");
 
 				const bytes = Buffer.byteLength(content, "utf-8");
-				return { result: `Successfully wrote ${bytes} bytes to ${relativePath}`, isError: false };
+				const diffPreview = globalDiffEngine.generateDiff(relativePath, oldContent, content);
+				return { result: `Successfully wrote ${bytes} bytes to ${relativePath}${diffPreview}`, isError: false };
 			} catch (err: any) {
 				return { result: `Error: ${err.message}`, isError: true };
 			}

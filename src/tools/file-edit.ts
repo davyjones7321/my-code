@@ -42,11 +42,14 @@ export function createFileEditTool(projectRoot: string): Tool {
 				const after = content.substring(index + oldText.length);
 				const newContent = before + newText + after;
 
+				const { globalDiffEngine } = await import("./diff.ts");
+				globalDiffEngine.backupFile(absolutePath, content);
+
 				fs.writeFileSync(absolutePath, newContent, "utf-8");
 
-				// Simple diff for output
-				const resultText = `Replaced text in ${relativePath}:\n\n- ${oldText.slice(0, 100)}${oldText.length > 100 ? "..." : ""}\n+ ${newText.slice(0, 100)}${newText.length > 100 ? "..." : ""}`;
-				return { result: resultText, isError: false };
+				// Unified colorized diff for output
+				const diffPreview = globalDiffEngine.generateDiff(relativePath, content, newContent);
+				return { result: `Successfully edited ${relativePath}${diffPreview}`, isError: false };
 			} catch (err: any) {
 				return { result: `Error: ${err.message}`, isError: true };
 			}

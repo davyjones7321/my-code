@@ -221,3 +221,94 @@ export const fetchUrlTool: Tool = {
 		}
 	},
 };
+
+/**
+ * Multi-Page Documentation Crawler Tool using node-html-parser
+ */
+export const crawlSiteTool: Tool = {
+	name: "crawl_site",
+	description: "Recursively crawl a documentation website and extract clean markdown content across multiple pages.",
+	inputSchema: {
+		type: "object",
+		properties: {
+			entryUrl: {
+				type: "string",
+				description: "The root documentation URL to crawl (e.g. 'https://docs.cloudflare.com/workers-ai/')",
+			},
+			maxDepth: {
+				type: "number",
+				description: "Maximum link depth to follow (default: 2)",
+			},
+			maxPages: {
+				type: "number",
+				description: "Maximum number of pages to crawl (default: 5)",
+			},
+		},
+		required: ["entryUrl"],
+	},
+	async execute(input: { entryUrl: string; maxDepth?: number; maxPages?: number }): Promise<{ result: string; isError: boolean }> {
+		try {
+			const entryUrl = input.entryUrl.trim();
+			const maxDepth = input.maxDepth || 2;
+			const maxPages = input.maxPages || 5;
+
+			const parsedEntry = new URL(entryUrl);
+			const baseDomain = parsedEntry.hostname;
+
+			const visited = new Set<string>();
+			const queue: { url: string; depth: number }[] = [{ url: entryUrl, depth: 1 }];
+			let combinedMarkdown = `# Documentation Crawl Report: ${entryUrl}\n\n`;
+
+			while (queue.length > 0 && visited.size < maxPages) {
+				const current = queue.shift();
+				if (!current || visited.has(current.url)) continue;
+				visited.add(current.url);
+
+				try {
+					const res = await fetchUrlTool.execute({ url: current.url, maxLength: 4000 });
+					if (!res.isError) {
+						combinedMarkdown += `\n---\n## Page ${visited.size}: ${current.url}\n\n${res.result}\n`;
+					}
+
+					if (current.depth < maxDepth) {
+						const response = await fetch(current.url, {
+							headers: { "User-Agent": "Mozilla/5.0" },
+						});
+						if (response.ok) {
+							const html = await response.text();
+							const root = parse(html);
+							const anchors = root.querySelectorAll("a");
+
+							for (const a of anchors) {
+								const href = a.getAttribute("href");
+								if (href) {
+									try {
+										const absolute = new URL(href, current.url).href;
+										const parsedAbsolute = new URL(absolute);
+										if (parsedAbsolute.hostname === baseDomain && !visited.has(absolute)) {
+											queue.push({ url: absolute, depth: current.depth + 1 });
+										}
+									} catch {
+										// Ignore invalid URLs
+									}
+								}
+							}
+						}
+					}
+				} catch {
+					// Ignore individual page fetch errors
+				}
+			}
+
+			return {
+				result: combinedMarkdown.trim(),
+				isError: false,
+			};
+		} catch (error: any) {
+			return {
+				result: `Crawl site error: ${error.message}`,
+				isError: true,
+			};
+		}
+	},
+};

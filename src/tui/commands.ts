@@ -885,6 +885,38 @@ export const guardrailsCommand: SlashCommand = {
 	},
 };
 
+export const undoCommand: SlashCommand = {
+	name: "undo",
+	aliases: ["rollback"],
+	description: "Rollback the last set of file edits made by the agent",
+	execute: async (_args: string[], context: CommandContext): Promise<CommandResult> => {
+		const { globalDiffEngine } = await import("../tools/diff.ts");
+		const res = globalDiffEngine.rollbackLast();
+
+		if (res.restoredCount === 0) {
+			context.output("🔄 [Undo Rollback]: No recent file backups available to restore.\n");
+		} else {
+			context.output(`🔄 [Undo Rollback]: Restored ${res.restoredCount} file(s) to previous state:\n${res.restoredFiles.map((f) => `  - ${f}`).join("\n")}\n`);
+		}
+		return { handled: true };
+	},
+};
+
+export const checkCommand: SlashCommand = {
+	name: "check",
+	aliases: ["typecheck"],
+	description: "Run TypeScript typecheck and LSP diagnostics on the workspace",
+	execute: async (_args: string[], context: CommandContext): Promise<CommandResult> => {
+		context.output("🩺 Running TypeScript Typecheck & LSP Diagnostics...\n");
+		const { globalLSPChecker } = await import("../lsp/checker.ts");
+		const current = context.session.getState().projectRoot || process.cwd();
+		const res = await globalLSPChecker.runTypecheck(current);
+
+		context.output(`${res.output}\n`);
+		return { handled: true };
+	},
+};
+
 export const BUILTIN_COMMANDS: SlashCommand[] = [
 	helpCommand,
 	clearCommand,
@@ -905,6 +937,8 @@ export const BUILTIN_COMMANDS: SlashCommand[] = [
 	ponytailAuditCommand,
 	securityCommand,
 	guardrailsCommand,
+	undoCommand,
+	checkCommand,
 ];
 
 
