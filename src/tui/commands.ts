@@ -705,6 +705,57 @@ export const scheduleCommand: SlashCommand = {
 	},
 };
 
+export const learnCommand: SlashCommand = {
+	name: "learn",
+	description: "Teach a new rule or lesson to the Hermes Agentic Brain",
+	execute: async (args: string[], context: CommandContext): Promise<CommandResult> => {
+		const ruleText = args.join(" ").trim();
+		if (!ruleText) {
+			context.output("Usage: /learn <rule or lesson text>\nExample: /learn Always run bun test on this project\n");
+			return { handled: true };
+		}
+
+		const { BrainManager } = await import("../brain/manager.ts");
+		const projectRoot = (context.session && typeof (context.session as any).getState === "function"
+			? (context.session as any).getState().projectRoot
+			: undefined) || process.cwd();
+
+		const brain = new BrainManager(projectRoot);
+		const rule = brain.addLearning(ruleText);
+
+		context.output(`🧠 [Hermes Brain] Learned new rule [${rule.id}]: "${rule.rule}"\nSaved to ${brain.getLearningsPath()}\n`);
+		return { handled: true };
+	},
+};
+
+export const brainCommand: SlashCommand = {
+	name: "brain",
+	description: "Inspect active learned rules stored in the Hermes Agentic Brain",
+	execute: async (_args: string[], context: CommandContext): Promise<CommandResult> => {
+		const { BrainManager } = await import("../brain/manager.ts");
+		const projectRoot = (context.session && typeof (context.session as any).getState === "function"
+			? (context.session as any).getState().projectRoot
+			: undefined) || process.cwd();
+
+		const brain = new BrainManager(projectRoot);
+		const rules = brain.getLearnings();
+
+		if (rules.length === 0) {
+			context.output("🧠 [Hermes Brain] No rules stored yet. Use /learn <rule> to teach new lessons.\n");
+			return { handled: true };
+		}
+
+		let output = `🧠 [Hermes Brain] Active Learned Rules (${rules.length} total):\n\n`;
+		rules.forEach((r, i) => {
+			output += `  ${i + 1}. ${r}\n`;
+		});
+		output += `\nStorage: ${brain.getLearningsPath()}\n`;
+
+		context.output(output);
+		return { handled: true };
+	},
+};
+
 export const BUILTIN_COMMANDS: SlashCommand[] = [
 	helpCommand,
 	clearCommand,
@@ -716,6 +767,8 @@ export const BUILTIN_COMMANDS: SlashCommand[] = [
 	skillsCommand,
 	modeCommand,
 	scheduleCommand,
+	learnCommand,
+	brainCommand,
 ];
 
 

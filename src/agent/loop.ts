@@ -1,4 +1,4 @@
-import { loadCustomSystemPrompt } from "../config/index.ts";
+import { loadBrainLearnings, loadCustomSystemPrompt } from "../config/index.ts";
 import type { Provider, ProviderCallConfig } from "../providers/base.ts";
 import type { AgentLoopConfig, ContentBlock, LoopEvent, Message } from "./types.ts";
 
@@ -17,8 +17,9 @@ export function getSystemEnvironmentPrompt(projectRoot: string = process.cwd()):
 	const customSection = customPrompt
 		? `\n\nCUSTOM AGENT INSTRUCTIONS (${sourceFile}):\n${customPrompt}\n`
 		: "";
+	const brainSection = loadBrainLearnings(projectRoot);
 
-	return `You are an expert autonomous AI coding assistant running on ${osName} (Shell: ${shellName}).${customSection}
+	return `You are an expert autonomous AI coding assistant running on ${osName} (Shell: ${shellName}).${customSection}${brainSection}
 
 CRITICAL ENVIRONMENT & COMPLETION GUIDANCE:
 1. DO NOT STOP MID-TASK:
